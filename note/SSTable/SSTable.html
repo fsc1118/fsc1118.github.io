@@ -1,0 +1,60 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSTable and LSM Trees</title>
+</head>
+
+<body>
+    <h1>SSTable and LSM Trees</h1>
+    <div>
+        Combination of SSTable and LSM Tree is a design of database engine used in many NoSQL databases.
+    </div>
+    <br /><br /><br />
+
+    <image src="./SSTable.png"></image>
+    <ul>
+        <li>Example of a SSTable. It is an appendable only log file, recording a key value relationship with key sorted
+        </li>
+        <li>
+            Multiple SSTables can be merged into one
+        </li>
+        <li>
+            When deleting a key, append a special mark to the end of the file, indicating that the key is deleted, and
+            subsequent merge will ignore this key
+        </li>
+    </ul>
+    <h2>Application in NoSQL</h2>
+    <ul>
+        <li>
+            When a write comes in, add it to an in-memory balanced tree data structure (for
+            example, a red-black tree). This in-memory tree is sometimes called a memtable.
+        </li>
+        <li>
+            When the memtable gets bigger than some threshold—typically a few megabytes
+            —write it out to disk as an SSTable file. Memtable then is emptied.
+        </li>
+        <li>
+            In order to serve a read request, first try to find the key in the memtable, then in
+            the most recent on-disk segment, then in the next-older segment, etc.
+        </li>
+        <li>
+            A merging and compaction process in the background combine SSTables
+        </li>
+        <li>
+            <b>Before writing to a memtable, writing to a different log used for crash recovery. When this memtable is
+                flushed to SSTable on disk, the log is discarded</b>
+        </li>
+    </ul>
+    <h2>Subtilties</h2>
+    <ul>
+        <li>
+            Query is not efficient if the key doesn't exist. <a href="https://en.wikipedia.org/wiki/Bloom_filter">Bloon
+                filter</a> is an efficient way to check if a key exists and can be applied.
+        </li>
+    </ul>
+</body>
+
+</html>
