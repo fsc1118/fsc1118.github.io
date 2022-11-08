@@ -9,7 +9,61 @@
 
 <body>
     <h1>Kafka</h1>
-    <a href="./kafka.pdf">Link</a>
+    <a href="./kafka.pdf">Paper Link:</a>
+    <br />
+    <br />
+    Kafka is a message queue with a vastly different design from rabbitmq and activemq <br />
+
+    <h2>Key Designs</h2>
+    <image src="./Architecture.png"></image>
+    <ul>
+        <li>Multiple producers, multiple consumers, multiple brokers </li>
+        <li>Broker is a medium of message delivery process where
+            producer publish messages into and consumers fetch messages from</li>
+        <li>Different from rabbitmq or activemq, brokers in kafka needn't acknowledge from consumers</li>
+        <li>Publish/Subsribe paradigm</li>
+        <li><b>Producers publish messages in the form of appending messages at the end of the log file maintained by
+                brokers</b></li>
+        <li>Consumers fetch messages from the log file</li>
+        <li>Consumers themselves maintain an index (offset) about where to start fetching from the log file</li>
+        <li>Log file remains in brokers for a certain time interval before being moved into permenant storage.
+        </li>
+        <li>The interval should be chosen so as to ensure consumers have consumed all messages in the log file</li>
+    </ul>
+    <h2>Kafka under distribued settings</h2>
+    <ul>
+        <li>Consumers are categorized into consumer groups</li>
+        <li>All consumers in a consumer groups consume a certain topic, and all consumer groups consumer all topics</li>
+        <li>A broker deals with messages from one or many topics</li>
+        <li>Each topic in a broker is partitioned (sharded)</li>
+        <li>Where a producer writes a message depends on topic and on how data is sharded</li>
+        <li><b>For each partition, only one consumer can read at one time</b></li>
+    </ul>
+    <h2>How ZooKeeper coordinates consumers </h2>
+    <ul>
+        <li>ZooKeeper maintains offset registry, broker registry, ownership registry, and consumer registry</li>
+        <li>Offset registry: Offset of next messages</li>
+        <li>Broker registry: IP address, port number of every broker, and topics and partitions stored in each</li>
+        <li>Ownership registry: One to One mapping of a partition and a consumer</li>
+        <li>Consumer registry: Which consumer group the consumer belongs and which topic it subscribes to</li>
+        <li>All but Offset registry are unpersistent</li>
+        <li>When a consumer fails, it loses its entry Consumer registry and partitions in Ownership registry</li>
+        <li>When a broker fails, it loses its entry in broker registry. All partitions associted with it will be removed
+        </li>
+        <li>Whenever a change in the broker set or the consumer group occurs, all consumers will be notified, causing a
+            rebalance described below</li>
+        <image src="./Rebalance Algorithm.png"></image>
+        <li><b>Since notification is asychronous, one consumer may take ownership of a partition another consumer owns.
+                If this occurs, latter simply forgoes the partition and retries rebalancing</b></li>
+        <li>Consumer periodically updates offset in Offset registry</li>
+        <li>Typically each message is consumed once. However, when a consumer shuts down before updating offset
+            registry, duplication occurs</li>
+    </ul>
+    <h2>Unique point</h2>
+    <ul>
+        <li>Reduced complexity in broker</li>
+        <li>Sequential processing of messages</li>
+    </ul>
 </body>
 
 </html>
