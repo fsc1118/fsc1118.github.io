@@ -65,5 +65,15 @@
         <li>Sequential processing of messages</li>
     </ul>
 </body>
+<script>
+    // add a button
+    var button = document.createElement("button")
+    button.innerHTML = "Back"
+    button.onclick = function () {
+        window.location.href = "../../note.html"
+    }
+    // Add the button in front of the body
+    document.body.insertBefore(button, document.body.firstChild)
+</script>
 
 </html>

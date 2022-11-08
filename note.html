@@ -13,5 +13,15 @@
         <li><a href="./note/kafka/kafka.html">Kafka</a></li>
     </ul>
 </body>
+<script>
+    // add a button
+    var button = document.createElement("button")
+    button.innerHTML = "Back"
+    button.onclick = function () {
+        window.location.href = "./index.html"
+    }
+    // Add the button in front of the body
+    document.body.insertBefore(button, document.body.firstChild)
+</script>
 
 </html>
