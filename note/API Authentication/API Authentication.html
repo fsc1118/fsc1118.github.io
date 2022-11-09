@@ -1,0 +1,38 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Authentication</title>
+</head>
+
+<body>
+    <h1>API Authentication</h1>
+    <h2>Why APIs are authenticated</h2>
+    <p>APIs are authenticated to prevent unauthorized access to the API.<br /><br />
+        For example, here is the API transferring money:
+        <code>/transfer?from=A&to=B&amount=1000</code><br /><br />
+        If the API is not authenticated, anyone can access the API and transfer money from A to B.
+        The point of API authentication is to ensure, in this case, request made by people other than A will be
+        rejected.
+    </p>
+    <h2>API Authentication Methods</h2>
+    <h3>1. Password Authentication</h3>
+    <p>When calling API, username and password are embeded in the HTTP body for application to verify.</p>
+    <h3>2. Token Authentication</h3>
+    <p>When calling API, each user has a unique token that identifies the user. When client sends request, that token is
+        embeded in the HTTP body. The request is accepted if the token is valid.</p>
+    <p>Token should be refreshed from time to time.</p>
+    </p>
+    <h3>3. OAuth</h3>
+    <p>OAuth is a protocol that grants application a token to fetch a user's information such as email address.</p>
+    <p>Application can use this token to authenticate the user similar to Token Authentication mentioed above. Client
+        will store the token which is passed to application to identify a user.</p>
+    <p>
+        OAuth has the merit that application doesn't need to explicitly handle the token such as storing and refreshing
+        it.
+    </p>
+</body>
+
+</html>
