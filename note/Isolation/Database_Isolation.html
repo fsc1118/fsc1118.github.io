@@ -1,0 +1,219 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Isolation</title>
+</head>
+
+<body>
+    <h1>Database Isolation</h1>
+    <h2>
+        Weak Isolation
+    </h2>
+    <h3>
+        Read Uncommitted
+    </h3>
+    <p>
+        Read uncommitted is the weakest isolation level. It allows a transaction to read data that has not been
+        committed.
+        This means that a transaction can read data that has not been committed by other transactions. This can lead to
+        dirty reads (read uncommitted value) and dirty writes (write to uncommited data).
+    </p>
+    <h3>
+        Read Committed
+    </h3>
+    <p>
+        Read committed is the second weakest isolation level.
+    <h6>
+        The following is copied from Martin Kleppmann's book "Designing Data-Intensive Applications".
+    </h6>
+    It makes two guarantees: <br />
+    1. When reading from the database, you will only see data that has been committed
+    (no dirty reads). <br />
+    2. When writing to the database, you will only overwrite data that has been committed (no dirty writes).
+    <br />
+    <h4>Implementing Read Committed</h4>
+    <h5>Prevent Dirty Write</h5>
+    <p>
+        Attempting to write to a row requires to acquire a lock on that row. If the row is locked, the transaction will
+        wait. If transaction acquires the lock, it will hold it until the transaction commits or aborts.
+    </p>
+    <h5>Prevent Dirty Read</h5>
+    <p>
+        For every object that is written, the database remembers both the old committed value and the new value set by
+        the transaction that currently holds the write
+        lock. While the transaction is ongoing, any other transactions that read the object are
+        simply given the old value. Only when the new value is committed do transactions
+        switch over to reading the new value.
+        <br />
+        ---- Martin Kleppmann, Designing Data-Intensive Applications
+    </p>
+    <h3>
+        Repeatable Read (Snapshot Isolation)
+    </h3>
+    <p>
+        Snapshot isolation ensures that a transaction sees a consistent snapshot of the database for the duration of
+        its execution.
+    </p>
+    <image src="./Snapshot isolation.png"></image>
+    <p>
+        Assuming a person has 2 accounts, A and B. The person has 500 in A and 550 in B. The person wants to
+        transfer 100 from A to B. At the same time, the person is watching the balance of A and B.<br />
+        Let's see T1 is the transaction to transfer 100 from A to B and T2 is the transaction to watch the balance of A
+        and B.
+        <br />
+        T2 firstly reads balance of A and its balance is 500. Then T1 starts to transfer 100 from A to B. T2 then
+        resumes to check balance B, finding it becomes 600.
+        <br />
+        This is problematic because it causes inconsistency. Assume there is a backup process running, it may lead to
+        inconsistent state of the database to be backed up.
+        <br />
+    </p>
+
+    <p>
+        Snapshot isolation solves this problem by taking a snapshot of the database at the beginning of the transaction
+        and using that snapshot for the duration of the transaction. <br />
+        In the above example, T2 takes a snapshot (SnapshotA) of the database at the beginning of the transaction and
+        reads from SnapshotA. <br />
+        T1 then starts by creating SnapshotB to transfer 100 from A to B, and all the update happen only in SnapshotB.
+        <br>
+        T2 then resumes to check balance B from the SnapshotA, finding it is still 500.
+    </p>
+    <p>
+        It can be described as follows: <br />
+        1. At the start of each transaction, the database makes a list of all the other transactions that are in
+        progress (not yet committed or aborted) at that time. Any writes
+        that those transactions have made are ignored, even if the transactions subsequently commit.<br>
+        2. Any writes made by aborted transactions are ignored.<br />
+        3. Any writes made by transactions with a later transaction ID (i.e., which started
+        after the current transaction started) are ignored, regardless of whether those
+        transactions have committed.<br />
+        4. All other writes are visible to the application’s queries.<br />
+        5. If a transaction deletes a row, the row isn’t actually deleted from the
+        database, but it is marked for deletion by setting the deleted_by field to the ID of the
+        transaction that requested the deletion. At some later time, when it is certain that no
+        transaction can any longer access the deleted data, a garbage collection process in the
+        database removes any rows marked for deletion and frees their space.
+        <br />
+        ---- Martin Kleppmann, Designing Data-Intensive Applications
+    </p>
+
+    <h2>
+        Serializable Isolation
+    </h2>
+    <p>
+        Serializable isolation ensures the result of several transactions running concurrently is the same as if they
+        were run sequentially.<br />
+    </p>
+    <h3>
+        Why Serializable Isolation
+    </h3>
+    <p>
+        Write skew is a problem that can occur when two transactions are updating the same data at the same time. <br />
+        For example, assume there is a table with 2 columns, id and balance. <br />
+        Transaction1 and Transaction2 are both increasing the balance of a row with id=1 by 100. <br />
+        Transaction1 reads the balance of id=1, which is 500. <br />
+        Transaction2 reads the balance of id=1, which is 500. <br />
+        Transaction1 then writes 600 to the balance of id=1. <br />
+        Transaction2 then writes 600 to the balance of id=1. <br />
+        The final balance of id=1 is 600, which is wrong. <br />
+    </p>
+    <h3>
+        Different implementation of Serializable Isolation. How serializable isolation solves write skew
+    </h3>
+    <h4>
+        Stored Procedures
+    </h4>
+    <p>
+        Stored procedures are a way to encapsulate a set of SQL statements into a single unit. <br />
+        The database will execute the stored procedure as a single unit, which means that the database will lock the
+        entire table while the stored procedure is running. <br />
+        This prevents write skew from happening. <br />
+        However, this is not a good solution because it is not scalable. <br />
+        If there are 1000 transactions, the database will lock the entire table for 1000 times. <br />
+    </p>
+    <h4>
+        Two Phase Locking and predicate locking
+    </h4>
+    <p>
+        In read committed and snapshot isolation, the database locks the row that is being writtent, but read isn't
+        affected. <br />
+        Two Phase Lock works as follow: <br />
+        • If a transaction wants to read an object, it must first acquire the lock in shared
+        mode. Several transactions are allowed to hold the lock in shared mode simultaneously, but if another
+        transaction already has an exclusive lock on the object,
+        these transactions must wait.
+        <br>
+        • If a transaction wants to write to an object, it must first acquire the lock in exclu‐
+        sive mode. No other transaction may hold the lock at the same time (either in
+        shared or in exclusive mode), so if there is any existing lock on the object, the
+        transaction must wait.
+        <br />
+        • If a transaction first reads and then writes an object, it may upgrade its shared
+        lock to an exclusive lock. The upgrade works the same as getting an exclusive
+        lock directly.
+        <br />
+        • After a transaction has acquired the lock, it must continue to hold the lock until
+        the end of the transaction (commit or abort). This is where the name “twophase” comes from: the first phase
+        (while the transaction is executing) is when
+        the locks are acquired, and the second phase (at the end of the transaction) is
+        when all the locks are released.
+        <br />
+        • The database automatically detects deadlocks between transactions and
+        aborts one of them so that the others can make progress.
+        <br />
+    <p>
+        A deadlock senario:<br />
+        Two transactions, T1 and T2, are initially both reading, so they have shared lock <br />
+        Then both T1 and T2 want to write, so they both need to upgrade their shared lock to exclusive lock. <br />
+        However, neither T1 nor T2 can upgrade their shared lock to exclusive lock because the other one already has an
+        sharded lock.
+    </p>
+    <br />
+    ---- Martin Kleppmann, Designing Data-Intensive Applications
+    <p>
+        Predicate locking is a way to lock a subset of rows in a table. <br />
+        For example, if a transaction wants to update the balance of all the rows with id=1, the database will lock all
+        the rows with id=1. <br />
+        This, in combination with two phase locking, can solve write skew. <br />
+        Again, assuming T1 and T2 are both increasing the balance of a row with id=1 by 100. <br />
+        T1 reads the balance of id=1, which is 500, acquiring the shared lock <br />
+        T2 reads the balance of id=1, which is 500, acquiring the shared lock <br />
+        Then T1 and T2 will be in deadlock, as described above. <br />
+        Therefore, one of them will be aborted, and the other one will be able to write to the balance of id=1. <br />
+        This prevents write skew from happening. <br />
+    </p>
+    </p>
+    <h4>
+        Serializable Snapshot Isolation
+    </h4>
+    <p>
+        This is an optimistic concurrency control method. <br />
+        This lets concurrent transaction run, only aborting the transaction when inconsistency is detected. <br />
+        This works well if inconsistency is rare. <br />
+    </p>
+    <h5>
+        How Serializable Snapshot Isolation works
+    </h5>
+    <ul>
+        <li>Detecting when a transaction reads outdated values</li>
+        <li>Detecting when one transaction modifies
+            another transaction’s reads.</li>
+    </ul>
+    <p>
+        When a database detects that a transaction A is reading outdated values updated by transaction B, it aborts that
+        transaction A when it
+        commits if it then
+        writes and if transaction B has commited.
+        <br>
+        This is because if the transaction is read only, it doesn't matter if it reads outdated values since it will not
+        cause inconsistency. <br />
+        Also, if transaction B has not commited, transaction A if commit will not result in write skew, transaction B
+        will. <br />
+
+    </p>
+</body>
+
+</html>
