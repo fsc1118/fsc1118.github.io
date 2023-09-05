@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-title" content="Engineering at Meta - Engineering at Meta Blog">
+	<meta property="fb:app_id" content="1425766027653270" />
+	<link rel="profile" href="http://gmpg.org/xfn/11">
+	<link rel="pingback" href="https://engineering.fb.com/xmlrpc.php">
+	<meta name='robots' content='index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1' />
+		<script async src="https://engineering.fb.com/wp-content/themes/code-fb-com/dist/js/optimize.min.js"></script>
+	
+	<!-- This site is optimized with the Yoast SEO Premium plugin v19.3 (Yoast SEO v19.12) - https://yoast.com/wordpress/plugins/seo/ -->
+	<title>Cache made consistent</title>
+	<meta name="description" content="When it comes to cache invalidation, we believe we now have an effective solution to bridge the gap between theory and practice." />
+	<link rel="canonical" href="https://engineering.fb.com/2022/06/08/core-data/cache-made-consistent/" />
+	<meta name="twitter:label1" content="Written by" />
+	<meta name="twitter:data1" content="Lu Pan" />
+	<meta name="twitter:label2" content="Est. reading time" />
+	<meta name="twitter:data2" content="15 minutes" />
+	<script type="application/ld+json" class="yoast-schema-graph">{"@context":"https://schema.org","@graph":[{"@type":"Article","@id":"https://engineering.fb.com/2022/06/08/core-data/cache-made-consistent/#article","isPartOf":{"@id":"https://engineering.fb.com/2022/06/08/core-data/cache-made-consistent/"},"author":[{"@id":"https://engineering.fb.com/#/schema/person/image/3783e7de92ebb693bded373e9e52c395"}],"headline":"Cache made consistent","datePublished":"2022-06-08T17:30:16+00:00","dateModified":"2023-02-21T18:34:11+00:00","mainEntityOfPage":{"@id":"https://engineering.fb.com/2022/06/08/core-data/cache-made-consistent/"},"wordCount":2981,"publisher":{"@id":"https://engineering.fb.com/#organization"},"image":{"@id":"https://engineering.fb.com/2022/06/08/core-data/cache-made-consistent/#primaryimage"},"thumbnailUrl":"https://engineering.fb.com/wp-content/uploads/2022/06/CacheMadeConsistentHero.png","articleSection":["Core Data","DevInfra"],"inLanguage":"en-US"},{"@type":"WebPage","@id":"https://engineering.fb.com/2022/06/08/core-data/cache-made-consistent/","url":"https://engineering.fb.com/2022/06/08/core-data/cache-made-consistent/","name":"Cache made consistent","isPartOf":{"@id":"https://engineering.fb.com/#website"},"primaryImageOfPage":{"@id":"https://engineering.fb.com/2022/06/08/core-data/cache-made-consistent/#primaryimage"},"image":{"@id":"https://engineering.fb.com/2022/06/08/core-data/cache-made-consistent/#primaryimage"},"thumbnailUrl":"https://engineering.fb.com/wp-content/uploads/2022/06/CacheMadeConsistentHero.png","datePublished":"2022-06-08T17:30:16+00:00","dateModified":"2023-02-21T18:34:11+00:00","description":"When it comes to cache invalidation, we believe we now have an effective solution to bridge the gap between theory and practice.","breadcrumb":{"@id":"https://engineering.fb.com/2022/06/08/core-data/cache-made-consistent/#breadcrumb"},"inLanguage":"en-US","potentialAction":[{"@type":"ReadAction","target":["https://engineering.fb.com/2022/06/08/core-data/cache-made-consistent/"]}]},{"@type":"ImageObject","inLanguage":"en-US","@id":"https://engineering.fb.com/2022/06/08/core-data/cache-made-consistent/#primaryimage","url":"https://engineering.fb.com/wp-content/uploads/2022/06/CacheMadeConsistentHero.png","contentUrl":"https://engineering.fb.com/wp-content/uploads/2022/06/CacheMadeConsistentHero.png","width":2560,"height":1440},{"@type":"BreadcrumbList","@id":"https://engineering.fb.com/2022/06/08/core-data/cache-made-consistent/#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://engineering.fb.com/"},{"@type":"ListItem","position":2,"name":"Cache made consistent"}]},{"@type":"WebSite","@id":"https://engineering.fb.com/#website","url":"https://engineering.fb.com/","name":"Engineering at Meta","description":"Engineering at Meta Blog","publisher":{"@id":"https://engineering.fb.com/#organization"},"potentialAction":[{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://engineering.fb.com/?s={search_term_string}"},"query-input":"required name=search_term_string"}],"inLanguage":"en-US"},{"@type":"Organization","@id":"https://engineering.fb.com/#organization","name":"Meta","url":"https://engineering.fb.com/","logo":{"@type":"ImageObject","inLanguage":"en-US","@id":"https://engineering.fb.com/#/schema/logo/image/","url":"https://engineering.fb.com/wp-content/uploads/2023/08/Meta_lockup_positive-primary_RGB.jpg","contentUrl":"https://engineering.fb.com/wp-content/uploads/2023/08/Meta_lockup_positive-primary_RGB.jpg","width":29011,"height":12501,"caption":"Meta"},"image":{"@id":"https://engineering.fb.com/#/schema/logo/image/"},"sameAs":["https://www.facebook.com/Engineering/","https://twitter.com/fb_engineering"]},[],{"@type":"Person","@id":"https://engineering.fb.com/#/schema/person/image/3783e7de92ebb693bded373e9e52c395","name":"Lu Pan","image":{"@type":"ImageObject","inLanguage":"en-US","@id":"https://engineering.fb.com/#/schema/person/image/23494c9101089ad44ae88ce9d2f56aac","url":"https://secure.gravatar.com/avatar/?s=96&d=mm&r=g","contentUrl":"https://secure.gravatar.com/avatar/?s=96&d=mm&r=g","caption":"Lu Pan"},"url":"https://engineering.fb.com/author/lu-pan/"}]}</script>
+	<!-- / Yoast SEO Premium plugin. -->
+
+
+<link rel='dns-prefetch' href='//secure.gravatar.com' />
+<link rel='dns-prefetch' href='//v0.wordpress.com' />
+<link rel="alternate" type="application/rss+xml" title="Engineering at Meta &raquo; Feed" href="https://engineering.fb.com/feed/" />
+<link rel="alternate" type="application/rss+xml" title="Engineering at Meta &raquo; Comments Feed" href="https://engineering.fb.com/comments/feed/" />
+	<script async src="https://www.googleoptimize.com/optimize.js?id=OPT-TPNDQC5" onerror="dataLayer.hide.end && dataLayer.hide.end()"></script>
+	<script type="text/javascript">
+window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/14.0.0\/72x72\/","ext":".png","svgUrl":"https:\/\/s.w.org\/images\/core\/emoji\/14.0.0\/svg\/","svgExt":".svg","source":{"concatemoji":"https:\/\/engineering.fb.com\/wp-includes\/js\/wp-emoji-release.min.js?ver=6.3.1"}};
+/*! This file is auto-generated */
+!function(i,n){var o,s,e;function c(e){try{var t={supportTests:e,timestamp:(new Date).valueOf()};sessionStorage.setItem(o,JSON.stringify(t))}catch(e){}}function p(e,t,n){e.clearRect(0,0,e.canvas.width,e.canvas.height),e.fillText(t,0,0);var t=new Uint32Array(e.getImageData(0,0,e.canvas.width,e.canvas.height).data),r=(e.clearRect(0,0,e.canvas.width,e.canvas.height),e.fillText(n,0,0),new Uint32Array(e.getImageData(0,0,e.canvas.width,e.canvas.height).data));return t.every(function(e,t){return e===r[t]})}function u(e,t,n){switch(t){case"flag":return n(e,"\ud83c\udff3\ufe0f\u200d\u26a7\ufe0f","\ud83c\udff3\ufe0f\u200b\u26a7\ufe0f")?!1:!n(e,"\ud83c\uddfa\ud83c\uddf3","\ud83c\uddfa\u200b\ud83c\uddf3")&&!n(e,"\ud83c\udff4\udb40\udc67\udb40\udc62\udb40\udc65\udb40\udc6e\udb40\udc67\udb40\udc7f","\ud83c\udff4\u200b\udb40\udc67\u200b\udb40\udc62\u200b\udb40\udc65\u200b\udb40\udc6e\u200b\udb40\udc67\u200b\udb40\udc7f");case"emoji":return!n(e,"\ud83e\udef1\ud83c\udffb\u200d\ud83e\udef2\ud83c\udfff","\ud83e\udef1\ud83c\udffb\u200b\ud83e\udef2\ud83c\udfff")}return!1}function f(e,t,n){var r="undefined"!=typeof WorkerGlobalScope&&self instanceof WorkerGlobalScope?new OffscreenCanvas(300,150):i.createElement("canvas"),a=r.getContext("2d",{willReadFrequently:!0}),o=(a.textBaseline="top",a.font="600 32px Arial",{});return e.forEach(function(e){o[e]=t(a,e,n)}),o}function t(e){var t=i.createElement("script");t.src=e,t.defer=!0,i.head.appendChild(t)}"undefined"!=typeof Promise&&(o="wpEmojiSettingsSupports",s=["flag","emoji"],n.supports={everything:!0,everythingExceptFlag:!0},e=new Promise(function(e){i.addEventListener("DOMContentLoaded",e,{once:!0})}),new Promise(function(t){var n=function(){try{var e=JSON.parse(sessionStorage.getItem(o));if("object"==typeof e&&"number"==typeof e.timestamp&&(new Date).valueOf()<e.timestamp+604800&&"object"==typeof e.supportTests)return e.supportTests}catch(e){}return null}();if(!n){if("undefined"!=typeof Worker&&"undefined"!=typeof OffscreenCanvas&&"undefined"!=typeof URL&&URL.createObjectURL&&"undefined"!=typeof Blob)try{var e="postMessage("+f.toString()+"("+[JSON.stringify(s),u.toString(),p.toString()].join(",")+"));",r=new Blob([e],{type:"text/javascript"}),a=new Worker(URL.createObjectURL(r),{name:"wpTestEmojiSupports"});return void(a.onmessage=function(e){c(n=e.data),a.terminate(),t(n)})}catch(e){}c(n=f(s,u,p))}t(n)}).then(function(e){for(var t in e)n.supports[t]=e[t],n.supports.everything=n.supports.everything&&n.supports[t],"flag"!==t&&(n.supports.everythingExceptFlag=n.supports.everythingExceptFlag&&n.supports[t]);n.supports.everythingExceptFlag=n.supports.everythingExceptFlag&&!n.supports.flag,n.DOMReady=!1,n.readyCallback=function(){n.DOMReady=!0}}).then(function(){return e}).then(function(){var e;n.supports.everything||(n.readyCallback(),(e=n.source||{}).concatemoji?t(e.concatemoji):e.wpemoji&&e.twemoji&&(t(e.twemoji),t(e.wpemoji)))}))}((window,document),window._wpemojiSettings);
+</script>
+<style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 0.07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style>
+	<link rel='stylesheet' id='all-css-0' href='https://engineering.fb.com/_static/??-eJx1jt0KgzAMhV9oGpxj4sXYo4zaBolLf2hTxbdfkSnuYjeBQ76Pc2AJFTnN2WACnRIYSgIDe/2umIao4gpJVsbakqsLcIFiaO8EnYDNVeA8kkswoQRVpOZa3/bwmtEZH0Fl8VaJkD6wmQz6ELE0DpnYfCvRkBRhCwk2qFxcjuZj65TAFloho92mnEJgtWKsGEel15/hf/XyO+ddetpHc+/btu26/voBjRhvyw==' type='text/css' media='all' />
+<style id='wp-block-library-inline-css'>
+.has-text-align-justify{text-align:justify;}
+</style>
+<style id='elasticpress-facet-style-inline-css'>
+.widget_ep-facet input[type=search],.wp-block-elasticpress-facet input[type=search]{margin-bottom:1rem}.widget_ep-facet .searchable .inner,.wp-block-elasticpress-facet .searchable .inner{max-height:20em;overflow:scroll}.widget_ep-facet .term.hide,.wp-block-elasticpress-facet .term.hide{display:none}.widget_ep-facet .empty-term,.wp-block-elasticpress-facet .empty-term{opacity:.5;position:relative}.widget_ep-facet .empty-term:after,.wp-block-elasticpress-facet .empty-term:after{bottom:0;content:" ";display:block;left:0;position:absolute;right:0;top:0;width:100%;z-index:2}.widget_ep-facet .level-1,.wp-block-elasticpress-facet .level-1{padding-left:20px}.widget_ep-facet .level-2,.wp-block-elasticpress-facet .level-2{padding-left:40px}.widget_ep-facet .level-3,.wp-block-elasticpress-facet .level-3{padding-left:60px}.widget_ep-facet .level-4,.wp-block-elasticpress-facet .level-4{padding-left:5pc}.widget_ep-facet .level-5,.wp-block-elasticpress-facet .level-5{padding-left:75pt}.widget_ep-facet input[disabled],.wp-block-elasticpress-facet input[disabled]{cursor:pointer;opacity:1}.widget_ep-facet .term a,.wp-block-elasticpress-facet .term a{-webkit-box-align:center;-ms-flex-align:center;align-items:center;display:-webkit-box;display:-ms-flexbox;display:flex;position:relative}.widget_ep-facet .term a:hover .ep-checkbox,.wp-block-elasticpress-facet .term a:hover .ep-checkbox{background-color:#ccc}.ep-checkbox{-webkit-box-align:center;-ms-flex-align:center;-ms-flex-negative:0;-webkit-box-pack:center;-ms-flex-pack:center;align-items:center;background-color:#eee;display:-webkit-box;display:-ms-flexbox;display:flex;flex-shrink:0;height:1em;justify-content:center;margin-right:.25em;width:1em}.ep-checkbox:after{border:solid #fff;border-width:0 .125em .125em 0;content:"";display:none;height:.5em;-webkit-transform:rotate(45deg);transform:rotate(45deg);width:.25em}.ep-checkbox.checked{background-color:#5e5e5e}.ep-checkbox.checked:after{display:block}
+
+</style>
+<link rel='stylesheet' id='all-css-2' href='https://engineering.fb.com/wp-content/mu-plugins/search/elasticpress-next/dist/css/related-posts-block-styles.min.css?m=1693327649g' type='text/css' media='all' />
+<style id='classic-theme-styles-inline-css'>
+/*! This file is auto-generated */
+.wp-block-button__link{color:#fff;background-color:#32373c;border-radius:9999px;box-shadow:none;text-decoration:none;padding:calc(.667em + 2px) calc(1.333em + 2px);font-size:1.125em}.wp-block-file__button{background:#32373c;color:#fff;text-decoration:none}
+</style>
+<style id='global-styles-inline-css'>
+body{--wp--preset--color--black: #000000;--wp--preset--color--cyan-bluish-gray: #abb8c3;--wp--preset--color--white: #ffffff;--wp--preset--color--pale-pink: #f78da7;--wp--preset--color--vivid-red: #cf2e2e;--wp--preset--color--luminous-vivid-orange: #ff6900;--wp--preset--color--luminous-vivid-amber: #fcb900;--wp--preset--color--light-green-cyan: #7bdcb5;--wp--preset--color--vivid-green-cyan: #00d084;--wp--preset--color--pale-cyan-blue: #8ed1fc;--wp--preset--color--vivid-cyan-blue: #0693e3;--wp--preset--color--vivid-purple: #9b51e0;--wp--preset--gradient--vivid-cyan-blue-to-vivid-purple: linear-gradient(135deg,rgba(6,147,227,1) 0%,rgb(155,81,224) 100%);--wp--preset--gradient--light-green-cyan-to-vivid-green-cyan: linear-gradient(135deg,rgb(122,220,180) 0%,rgb(0,208,130) 100%);--wp--preset--gradient--luminous-vivid-amber-to-luminous-vivid-orange: linear-gradient(135deg,rgba(252,185,0,1) 0%,rgba(255,105,0,1) 100%);--wp--preset--gradient--luminous-vivid-orange-to-vivid-red: linear-gradient(135deg,rgba(255,105,0,1) 0%,rgb(207,46,46) 100%);--wp--preset--gradient--very-light-gray-to-cyan-bluish-gray: linear-gradient(135deg,rgb(238,238,238) 0%,rgb(169,184,195) 100%);--wp--preset--gradient--cool-to-warm-spectrum: linear-gradient(135deg,rgb(74,234,220) 0%,rgb(151,120,209) 20%,rgb(207,42,186) 40%,rgb(238,44,130) 60%,rgb(251,105,98) 80%,rgb(254,248,76) 100%);--wp--preset--gradient--blush-light-purple: linear-gradient(135deg,rgb(255,206,236) 0%,rgb(152,150,240) 100%);--wp--preset--gradient--blush-bordeaux: linear-gradient(135deg,rgb(254,205,165) 0%,rgb(254,45,45) 50%,rgb(107,0,62) 100%);--wp--preset--gradient--luminous-dusk: linear-gradient(135deg,rgb(255,203,112) 0%,rgb(199,81,192) 50%,rgb(65,88,208) 100%);--wp--preset--gradient--pale-ocean: linear-gradient(135deg,rgb(255,245,203) 0%,rgb(182,227,212) 50%,rgb(51,167,181) 100%);--wp--preset--gradient--electric-grass: linear-gradient(135deg,rgb(202,248,128) 0%,rgb(113,206,126) 100%);--wp--preset--gradient--midnight: linear-gradient(135deg,rgb(2,3,129) 0%,rgb(40,116,252) 100%);--wp--preset--font-size--small: 13px;--wp--preset--font-size--medium: 20px;--wp--preset--font-size--large: 36px;--wp--preset--font-size--x-large: 42px;--wp--preset--spacing--20: 0.44rem;--wp--preset--spacing--30: 0.67rem;--wp--preset--spacing--40: 1rem;--wp--preset--spacing--50: 1.5rem;--wp--preset--spacing--60: 2.25rem;--wp--preset--spacing--70: 3.38rem;--wp--preset--spacing--80: 5.06rem;--wp--preset--shadow--natural: 6px 6px 9px rgba(0, 0, 0, 0.2);--wp--preset--shadow--deep: 12px 12px 50px rgba(0, 0, 0, 0.4);--wp--preset--shadow--sharp: 6px 6px 0px rgba(0, 0, 0, 0.2);--wp--preset--shadow--outlined: 6px 6px 0px -3px rgba(255, 255, 255, 1), 6px 6px rgba(0, 0, 0, 1);--wp--preset--shadow--crisp: 6px 6px 0px rgba(0, 0, 0, 1);}:where(.is-layout-flex){gap: 0.5em;}:where(.is-layout-grid){gap: 0.5em;}body .is-layout-flow > .alignleft{float: left;margin-inline-start: 0;margin-inline-end: 2em;}body .is-layout-flow > .alignright{float: right;margin-inline-start: 2em;margin-inline-end: 0;}body .is-layout-flow > .aligncenter{margin-left: auto !important;margin-right: auto !important;}body .is-layout-constrained > .alignleft{float: left;margin-inline-start: 0;margin-inline-end: 2em;}body .is-layout-constrained > .alignright{float: right;margin-inline-start: 2em;margin-inline-end: 0;}body .is-layout-constrained > .aligncenter{margin-left: auto !important;margin-right: auto !important;}body .is-layout-constrained > :where(:not(.alignleft):not(.alignright):not(.alignfull)){max-width: var(--wp--style--global--content-size);margin-left: auto !important;margin-right: auto !important;}body .is-layout-constrained > .alignwide{max-width: var(--wp--style--global--wide-size);}body .is-layout-flex{display: flex;}body .is-layout-flex{flex-wrap: wrap;align-items: center;}body .is-layout-flex > *{margin: 0;}body .is-layout-grid{display: grid;}body .is-layout-grid > *{margin: 0;}:where(.wp-block-columns.is-layout-flex){gap: 2em;}:where(.wp-block-columns.is-layout-grid){gap: 2em;}:where(.wp-block-post-template.is-layout-flex){gap: 1.25em;}:where(.wp-block-post-template.is-layout-grid){gap: 1.25em;}.has-black-color{color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-color{color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-color{color: var(--wp--preset--color--white) !important;}.has-pale-pink-color{color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-color{color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-color{color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-color{color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-color{color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-color{color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-color{color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-color{color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-color{color: var(--wp--preset--color--vivid-purple) !important;}.has-black-background-color{background-color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-background-color{background-color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-background-color{background-color: var(--wp--preset--color--white) !important;}.has-pale-pink-background-color{background-color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-background-color{background-color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-background-color{background-color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-background-color{background-color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-background-color{background-color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-background-color{background-color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-background-color{background-color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-background-color{background-color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-background-color{background-color: var(--wp--preset--color--vivid-purple) !important;}.has-black-border-color{border-color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-border-color{border-color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-border-color{border-color: var(--wp--preset--color--white) !important;}.has-pale-pink-border-color{border-color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-border-color{border-color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-border-color{border-color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-border-color{border-color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-border-color{border-color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-border-color{border-color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-border-color{border-color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-border-color{border-color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-border-color{border-color: var(--wp--preset--color--vivid-purple) !important;}.has-vivid-cyan-blue-to-vivid-purple-gradient-background{background: var(--wp--preset--gradient--vivid-cyan-blue-to-vivid-purple) !important;}.has-light-green-cyan-to-vivid-green-cyan-gradient-background{background: var(--wp--preset--gradient--light-green-cyan-to-vivid-green-cyan) !important;}.has-luminous-vivid-amber-to-luminous-vivid-orange-gradient-background{background: var(--wp--preset--gradient--luminous-vivid-amber-to-luminous-vivid-orange) !important;}.has-luminous-vivid-orange-to-vivid-red-gradient-background{background: var(--wp--preset--gradient--luminous-vivid-orange-to-vivid-red) !important;}.has-very-light-gray-to-cyan-bluish-gray-gradient-background{background: var(--wp--preset--gradient--very-light-gray-to-cyan-bluish-gray) !important;}.has-cool-to-warm-spectrum-gradient-background{background: var(--wp--preset--gradient--cool-to-warm-spectrum) !important;}.has-blush-light-purple-gradient-background{background: var(--wp--preset--gradient--blush-light-purple) !important;}.has-blush-bordeaux-gradient-background{background: var(--wp--preset--gradient--blush-bordeaux) !important;}.has-luminous-dusk-gradient-background{background: var(--wp--preset--gradient--luminous-dusk) !important;}.has-pale-ocean-gradient-background{background: var(--wp--preset--gradient--pale-ocean) !important;}.has-electric-grass-gradient-background{background: var(--wp--preset--gradient--electric-grass) !important;}.has-midnight-gradient-background{background: var(--wp--preset--gradient--midnight) !important;}.has-small-font-size{font-size: var(--wp--preset--font-size--small) !important;}.has-medium-font-size{font-size: var(--wp--preset--font-size--medium) !important;}.has-large-font-size{font-size: var(--wp--preset--font-size--large) !important;}.has-x-large-font-size{font-size: var(--wp--preset--font-size--x-large) !important;}
+.wp-block-navigation a:where(:not(.wp-element-button)){color: inherit;}
+:where(.wp-block-post-template.is-layout-flex){gap: 1.25em;}:where(.wp-block-post-template.is-layout-grid){gap: 1.25em;}
+:where(.wp-block-columns.is-layout-flex){gap: 2em;}:where(.wp-block-columns.is-layout-grid){gap: 2em;}
+.wp-block-pullquote{font-size: 1.5em;line-height: 1.6;}
+</style>
+<link rel='stylesheet' id='all-css-6' href='https://engineering.fb.com/_static/??-eJxlzdEOgjAMheEXsmsYBvXC+CzSVZjSsdgSX98NMTHx9sv5c/CVgeZknAzztAwxKRYaQn5W1+ohqmGVDRyp7vAntJGFFWkODLe+sHyaskMa4xRgXTiJ6a+VBb6/d7Z8pQc03u3XdoPaXOTcdKe29Yfu6N8kokFd' type='text/css' media='all' />
+<script src='https://engineering.fb.com/wp-content/plugins/wp-gdpr-consent/dist/gdprconsent.js?ver=2.0.0' id='gdprconsent-js'></script>
+<script id="gdprconsent-js-after" type="text/javascript">
+if (window.gdprSafeTrack) {
+  						window.gdprSafeTrack('https://www.googletagmanager.com/gtag/js?id=391063774');
+						window.gdprSafeTrack(function() {
+							var google_analytics_g4  = decodeURIComponent( '391063774' );
+							window.dataLayer = window.dataLayer || [];
+							function gtag(){dataLayer.push(arguments);}
+							gtag('js', new Date());
+							gtag('config', google_analytics_g4);
+						});
+					}
+if (window.gdprSafeTrack) {
+						window.gdprSafeTrack(function() {
+							var google_tag_manager  = decodeURIComponent( 'GTM-KZRLGZ8' );
+							(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+							new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+							j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+							'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+							})(window,document,'script','dataLayer',google_tag_manager);
+						});
+					}
+if (window.gdprSafeTrack) {
+						window.gdprSafeTrack(function() {
+							var facebook_pixel  = decodeURIComponent( '660742068067366' );
+							!function(f,b,e,v,n,t,s)
+							{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+							n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+							if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+							n.queue=[];t=b.createElement(e);t.async=!0;
+							t.src=v;s=b.getElementsByTagName(e)[0];
+							s.parentNode.insertBefore(t,s)}(window, document,'script',
+							'https://connect.facebook.net/en_US/fbevents.js');
+							fbq('init', facebook_pixel);
+							fbq('track', 'PageView');
+						});
+					}
+</script>
+<script type="text/javascript" src="https://engineering.fb.com/_static/??-eJzTLy/QzcxLzilNSS3WzwKiwtLUokoopZebmaeXVayjj0+Rbm5melFiSSqy4uT8vJLUvBL9kozUXKCW0ryU1KLikqLEApDugvyCgtQiqHL7XFtDM0tjY2Nzc0ujLAD4MjQO" ></script><link rel="https://api.w.org/" href="https://engineering.fb.com/wp-json/" /><link rel="alternate" type="application/json" href="https://engineering.fb.com/wp-json/wp/v2/posts/18828" /><link rel="EditURI" type="application/rsd+xml" title="RSD" href="https://engineering.fb.com/xmlrpc.php?rsd" />
+<meta name="generator" content="WordPress 6.3.1" />
+<link rel='shortlink' href='https://wp.me/pa0Lhq-4TG' />
+<link rel="alternate" type="application/json+oembed" href="https://engineering.fb.com/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fengineering.fb.com%2F2022%2F06%2F08%2Fcore-data%2Fcache-made-consistent%2F" />
+<link rel="alternate" type="text/xml+oembed" href="https://engineering.fb.com/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fengineering.fb.com%2F2022%2F06%2F08%2Fcore-data%2Fcache-made-consistent%2F&#038;format=xml" />
+<link rel="preload" href="https://engineering.fb.com/wp-content/themes/code-fb-com/fonts/FacebookReader-Medium.woff2" as="font" type="font/woff2" crossorigin="anonymous"><link rel="preload" href="https://engineering.fb.com/wp-content/themes/code-fb-com/fonts/FacebookReader-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous"><link rel="preload" href="https://engineering.fb.com/wp-content/themes/code-fb-com/fonts/Optimistic_Display_W_Md.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<!-- Jetpack Open Graph Tags -->
+<meta property="og:type" content="article" />
+<meta property="og:title" content="Cache made consistent" />
+<meta property="og:url" content="https://engineering.fb.com/2022/06/08/core-data/cache-made-consistent/" />
+<meta property="og:description" content="Caches help reduce latency, scale read-heavy workloads, and save cost. They are literally everywhere. Caches run on your phone and in your browser. For example, CDNs and DNS are essentially geo-rep…" />
+<meta property="article:published_time" content="2022-06-08T17:30:16+00:00" />
+<meta property="article:modified_time" content="2023-02-21T18:34:11+00:00" />
+<meta property="og:site_name" content="Engineering at Meta" />
+<meta property="og:image" content="https://engineering.fb.com/wp-content/uploads/2022/06/CacheMadeConsistentHero.png" />
+<meta property="og:image:width" content="2560" />
+<meta property="og:image:height" content="1440" />
+<meta property="og:image:alt" content="" />
+<meta property="og:locale" content="en_US" />
+<meta name="twitter:text:title" content="Cache made consistent" />
+<meta name="twitter:image" content="https://engineering.fb.com/wp-content/uploads/2022/06/CacheMadeConsistentHero.png?w=640" />
+<meta name="twitter:card" content="summary_large_image" />
+
+<!-- End Jetpack Open Graph Tags -->
+
+	<link rel="shortcut icon" href="https://engineering.fb.com/wp-content/themes/code-fb-com/favicon.ico" />
+</head>
+
+<body class="post-template-default single single-post postid-18828 single-format-standard group-blog">
+
+<div class="hfeed site" id="page">
+
+<!-- ******************* The Navbar Area ******************* -->
+<div class="wrapper-fluid wrapper-navbar" id="wrapper-navbar">
+	<a class="skip-link screen-reader-text sr-only" href="#content">
+	Skip to content	</a>
+
+	<nav class="navbar navbar-expand-std">
+
+			<div class="nav-container">
+	
+
+				<!-- Your site title as branding in the menu -->
+
+	<div class="nav-top-row">
+	
+		<h1 class="navbar-brand mb-0">
+			<a rel="home" href="https://engineering.fb.com/" title="Engineering at Meta">
+				<img class="navbar-brand-logo" src="https://engineering.fb.com/wp-content/themes/code-fb-com/img/logo-meta.svg" class="navbar-brand-logo" alt="Engineering at Meta" width="215" height="40" loading="lazy">
+			</a>
+		</h1>
+
+	<!-- end custom logo -->
+				<label for="search" class="screen-reader-text">Search this site</label>
+				<input type="text" id="search" name="search" class="form-control-lg navbar-search" autocomplete="off">
+
+				<button class="navbar-toggler navbar-searchbar-toggler"
+						type="button"
+						data-toggle="collapse"
+						data-target="#searchbarDropdown"
+						aria-controls="searchbarDropdown"
+						aria-expanded="false"
+						aria-label="Toggle navigation">
+					<img src="https://engineering.fb.com/wp-content/themes/code-fb-com/img/icon-search.svg"  class="navbar-mobile-search-icon" loading="lazy" width="24" height="25" />
+				</button>
+
+				<!-- desktop language menu (mobile language menu is implemented via jQuery)-->
+				<div class="notranslate nice-select navbar-language form-control">
+				</div>
+
+				<button class="navbar-toggler collapsed navbar-menu-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+
+			</div>
+
+			<div class="navbar-border"></div>
+
+			<!-- The WordPress Menu goes here -->
+	<div id="navbarNavDropdown" class="collapse navbar-collapse"><ul id="main-menu" class="navbar-nav"><li id="menu-item-60" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children nav-item menu-item-60 dropdown"><a title="Open Source" href="#" data-toggle="dropdown" class="nav-link dropdown-toggle">Open Source <span class="caret"></span><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 129 129" enable-background="new 0 0 129 129" width="12px" height="15px">
+							<polyline points="40 50 80 90 120 50" stroke="#adb1b8" stroke-width="10" stroke-linecap="butt" fill="none" stroke-linejoin="miter"/>
+						  </svg></a>
+<ul class=" dropdown-menu" role="menu">
+	<li id="menu-item-12330" class="menu-item menu-item-type-taxonomy menu-item-object-category nav-item menu-item-12330"><a title="Open Source" href="https://engineering.fb.com/category/open-source/" class="nav-link">Open Source</a></li>
+	<li id="menu-item-12331" class="menu-item menu-item-type-custom menu-item-object-custom nav-item menu-item-12331"><a title="Meta Open Source" href="https://opensource.fb.com" class="nav-link">Meta Open Source</a></li>
+</ul>
+</li>
+<li id="menu-item-2686" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children nav-item menu-item-2686 dropdown"><a title="Platforms" href="#" data-toggle="dropdown" class="nav-link dropdown-toggle">Platforms <span class="caret"></span><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 129 129" enable-background="new 0 0 129 129" width="12px" height="15px">
+							<polyline points="40 50 80 90 120 50" stroke="#adb1b8" stroke-width="10" stroke-linecap="butt" fill="none" stroke-linejoin="miter"/>
+						  </svg></a>
+<ul class=" dropdown-menu" role="menu">
+	<li id="menu-item-65" class="menu-item menu-item-type-taxonomy menu-item-object-category nav-item menu-item-65"><a title="Android" href="https://engineering.fb.com/category/android/" class="nav-link">Android</a></li>
+	<li id="menu-item-66" class="menu-item menu-item-type-taxonomy menu-item-object-category nav-item menu-item-66"><a title="iOS" href="https://engineering.fb.com/category/ios/" class="nav-link">iOS</a></li>
+	<li id="menu-item-67" class="menu-item menu-item-type-taxonomy menu-item-object-category nav-item menu-item-67"><a title="Web" href="https://engineering.fb.com/category/web/" class="nav-link">Web</a></li>
+</ul>
+</li>
+<li id="menu-item-2682" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children nav-item menu-item-2682 dropdown"><a title="Infrastructure Systems" href="#" data-toggle="dropdown" class="nav-link dropdown-toggle">Infrastructure Systems <span class="caret"></span><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 129 129" enable-background="new 0 0 129 129" width="12px" height="15px">
+							<polyline points="40 50 80 90 120 50" stroke="#adb1b8" stroke-width="10" stroke-linecap="butt" fill="none" stroke-linejoin="miter"/>
+						  </svg></a>
+<ul class=" dropdown-menu" role="menu">
+	<li id="menu-item-218" class="menu-item menu-item-type-taxonomy menu-item-object-category current-post-ancestor current-menu-parent current-post-parent nav-item menu-item-218"><a title="Core Data" href="https://engineering.fb.com/category/core-data/" class="nav-link">Core Data</a></li>
+	<li id="menu-item-219" class="menu-item menu-item-type-taxonomy menu-item-object-category nav-item menu-item-219"><a title="Data Infrastructure" href="https://engineering.fb.com/category/data-infrastructure/" class="nav-link">Data Infrastructure</a></li>
+	<li id="menu-item-220" class="menu-item menu-item-type-taxonomy menu-item-object-category current-post-ancestor current-menu-parent current-post-parent nav-item menu-item-220"><a title="DevInfra" href="https://engineering.fb.com/category/developer-tools/" class="nav-link">DevInfra</a></li>
+	<li id="menu-item-226" class="menu-item menu-item-type-taxonomy menu-item-object-category nav-item menu-item-226"><a title="Production Engineering" href="https://engineering.fb.com/category/production-engineering/" class="nav-link">Production Engineering</a></li>
+	<li id="menu-item-227" class="menu-item menu-item-type-taxonomy menu-item-object-category nav-item menu-item-227"><a title="Security" href="https://engineering.fb.com/category/security/" class="nav-link">Security</a></li>
+	<li id="menu-item-18607" class="menu-item menu-item-type-custom menu-item-object-custom nav-item menu-item-18607"><a title="Research Publications" href="https://research.facebook.com/publications/research-areas/systems-infrastructure/" class="nav-link">Research Publications</a></li>
+</ul>
+</li>
+<li id="menu-item-2683" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children nav-item menu-item-2683 dropdown"><a title="Physical Infrastructure" href="#" data-toggle="dropdown" class="nav-link dropdown-toggle">Physical Infrastructure <span class="caret"></span><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 129 129" enable-background="new 0 0 129 129" width="12px" height="15px">
+							<polyline points="40 50 80 90 120 50" stroke="#adb1b8" stroke-width="10" stroke-linecap="butt" fill="none" stroke-linejoin="miter"/>
+						  </svg></a>
+<ul class=" dropdown-menu" role="menu">
+	<li id="menu-item-215" class="menu-item menu-item-type-taxonomy menu-item-object-category nav-item menu-item-215"><a title="Connectivity" href="https://engineering.fb.com/category/connectivity/" class="nav-link">Connectivity</a></li>
+	<li id="menu-item-216" class="menu-item menu-item-type-taxonomy menu-item-object-category nav-item menu-item-216"><a title="Data Center Engineering" href="https://engineering.fb.com/category/data-center-engineering/" class="nav-link">Data Center Engineering</a></li>
+	<li id="menu-item-217" class="menu-item menu-item-type-taxonomy menu-item-object-category nav-item menu-item-217"><a title="Networking &amp; Traffic" href="https://engineering.fb.com/category/networking-traffic/" class="nav-link">Networking &amp; Traffic</a></li>
+	<li id="menu-item-18608" class="menu-item menu-item-type-custom menu-item-object-custom nav-item menu-item-18608"><a title="Research Publications" href="https://research.facebook.com/publications/research-areas/networking-connectivity/" class="nav-link">Research Publications</a></li>
+</ul>
+</li>
+<li id="menu-item-2684" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children nav-item menu-item-2684 dropdown"><a title="Video Engineering &amp; AR/VR" href="#" data-toggle="dropdown" class="nav-link dropdown-toggle">Video Engineering &#038; AR/VR <span class="caret"></span><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 129 129" enable-background="new 0 0 129 129" width="12px" height="15px">
+							<polyline points="40 50 80 90 120 50" stroke="#adb1b8" stroke-width="10" stroke-linecap="butt" fill="none" stroke-linejoin="miter"/>
+						  </svg></a>
+<ul class=" dropdown-menu" role="menu">
+	<li id="menu-item-225" class="menu-item menu-item-type-taxonomy menu-item-object-category nav-item menu-item-225"><a title="Video Engineering" href="https://engineering.fb.com/category/video-engineering/" class="nav-link">Video Engineering</a></li>
+	<li id="menu-item-223" class="menu-item menu-item-type-taxonomy menu-item-object-category nav-item menu-item-223"><a title="Virtual Reality" href="https://engineering.fb.com/category/virtual-reality/" class="nav-link">Virtual Reality</a></li>
+	<li id="menu-item-13388" class="menu-item menu-item-type-custom menu-item-object-custom nav-item menu-item-13388"><a title="Research Publications" href="https://research.facebook.com/publications/research-areas/augmented-reality-virtual-reality/" class="nav-link">Research Publications</a></li>
+</ul>
+</li>
+<li id="menu-item-2685" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children nav-item menu-item-2685 dropdown"><a title="Artificial Intelligence" href="#" data-toggle="dropdown" class="nav-link dropdown-toggle">Artificial Intelligence <span class="caret"></span><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 129 129" enable-background="new 0 0 129 129" width="12px" height="15px">
+							<polyline points="40 50 80 90 120 50" stroke="#adb1b8" stroke-width="10" stroke-linecap="butt" fill="none" stroke-linejoin="miter"/>
+						  </svg></a>
+<ul class=" dropdown-menu" role="menu">
+	<li id="menu-item-222" class="menu-item menu-item-type-taxonomy menu-item-object-category nav-item menu-item-222"><a title="ML Applications" href="https://engineering.fb.com/category/ml-applications/" class="nav-link">ML Applications</a></li>
+	<li id="menu-item-221" class="menu-item menu-item-type-taxonomy menu-item-object-category nav-item menu-item-221"><a title="AI Research" href="https://engineering.fb.com/category/ai-research/" class="nav-link">AI Research</a></li>
+	<li id="menu-item-13387" class="menu-item menu-item-type-custom menu-item-object-custom nav-item menu-item-13387"><a title="Research Publications" href="https://ai.facebook.com/results/?content_types%5B0%5D=publication" class="nav-link">Research Publications</a></li>
+</ul>
+</li>
+<li id="menu-item-228" class="menu-item menu-item-type-custom menu-item-object-custom nav-item menu-item-228"><a title="Watch Videos" href="/videos" class="nav-link">Watch Videos</a></li>
+</ul></div>		</div><!-- .container -->
+	
+		<div class="search-container collapse" id="searchbarDropdown">
+			<div class="searchbar-search">
+				<div class="searchbar-container">
+
+					<div class="navbar-mobile-search-margin"></div>
+					<input type="text" name="search" placeholder="Search" class="form-control-lg navbar-mobile-search" autofocus autocomplete="off">
+					<button class="searchbar-clear">
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+					</button>
+				</div>
+			</div>
+		</div>
+	</nav><!-- .site-navigation -->
+
+</div><!-- .wrapper-navbar end -->
+
+<div class="wrapper" id="single-wrapper">
+
+	<div class="single-container row" id="content" tabindex="-1">
+
+		<!-- Do the left sidebar check. -->
+		
+
+
+<div class="content-area" id="primary">
+		<main class="site-main" id="main">
+
+			
+				
+<article class="post-18828 post type-post status-publish format-standard has-post-thumbnail hentry category-core-data category-developer-tools fb_content_type-article" id="post-18828">
+
+	<header class="entry-header">
+		<div class="entry-meta">
+			POSTED ON <span class="posted-on entry-date"><time class="published updated" datetime="2022-06-08">JUNE 8, 2022</time></span> TO <span class="cat-links"><a href="https://engineering.fb.com/category/core-data/" rel="category tag">Core Data</a>, <a href="https://engineering.fb.com/category/developer-tools/" rel="category tag">DevInfra</a></span>
+			<h1 class="entry-title"><div>Cache made consistent</div></h1>		</div><!-- .entry-meta -->
+
+	</header><!-- .entry-header -->
+
+			<figure id="post-feat-image-container">
+				<img width="2560" height="1440" src="https://engineering.fb.com/wp-content/uploads/2022/06/CacheMadeConsistentHero.png" class="wp-post-image" alt="" loading="lazy" title="CacheMadeConsistentHero" />						</figure>
+		
+	<div class="entry-authors-social">
+					<div class="entry-authors">
+				By <a href="https://engineering.fb.com/author/lu-pan/" title="Posts by Lu Pan" class="author url fn" rel="author">Lu Pan</a>			</div>
+				<div class="entry-social">
+			<div class="entry-facebook">
+				<button onclick="return fbShare()" aria-label="Share this post on Facebook">
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/></svg>
+				</button>
+			</div>
+			<div class="entry-twitter">
+				<button onclick="return twitterSharePopup('https://engineering.fb.com/2022/06/08/core-data/cache-made-consistent/')" aria-label="Share this post on Twitter">
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/></svg>
+				</button>
+			</div>
+			<div class="entry-hacker-news">
+				<button onclick="return shareHackerNews('https://engineering.fb.com/2022/06/08/core-data/cache-made-consistent/')" aria-label="Share this post on Hacker News">
+					<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg"><path d="M13.693 14.659L21.507 0h-3.29l-4.612 9.165c-.47.94-.901 1.841-1.293 2.703l-1.234-2.703L6.525 0H3l7.726 14.482V24h2.967v-9.341z" fill-rule="nonzero"/></svg>
+				</button>
+			</div>
+		</div>
+	</div>
+
+	
+	<div class="entry-content">
+
+		<p><span style="font-weight: 400;">Caches help reduce latency, scale read-heavy workloads, and save cost. They are literally everywhere. Caches run on your phone and in your browser. For example, CDNs and DNS are essentially geo-replicated caches. It’s thanks to many caches working behind the scenes that you can read this blog post right now.</span></p>
+<p><span style="font-weight: 400;">Phil Karlton famously said, “There are only two hard things in computer science: cache invalidation and naming things.” If you have ever worked on a cache that uses invalidations, chances are you have run into the annoying problem of cache inconsistency.</span></p>
+<p><span style="font-weight: 400;">At Meta, we operate some of the largest cache deployments in the world, including</span> <a href="https://engineering.fb.com/2013/06/25/core-data/tao-the-power-of-the-graph/"><span style="font-weight: 400;">TAO</span></a><span style="font-weight: 400;"> and</span><a href="https://research.facebook.com/publications/scaling-memcache-at-facebook/"> <span style="font-weight: 400;">Memcache</span></a><span style="font-weight: 400;">. Over the years, we’ve improved TAO’s cache consistency by one measure, from 99.9999 percent (six nines) to 99.99999999 percent (10 nines). </span></p>
+<p><span style="font-weight: 400;">When it comes to cache invalidation, we believe we now have an effective solution to bridge the gap between theory and practice. The principle and methodology in this blog post apply broadly to most, if not all, cache services at any scale. It does so whether you are caching Postgres data in Redis or maintaining a disaggregated materialization.</span></p>
+<p><span style="font-weight: 400;">We want to help reduce the number of cache invalidation issues that engineers have to deal with and help make all caches with invalidations more consistent.</span></p>
+<div class="fb-video" data-allowfullscreen="true" data-href="https://www.facebook.com/watch/?v=717043009584352"></div>
+<h2><span style="font-weight: 400;">Defining cache invalidation and cache consistency </span></h2>
+<p><span style="font-weight: 400;">By definition, a cache doesn’t hold the source of truth of your data (e.g., a database). Cache invalidation describes the process of actively invalidating stale cache entries when data in the source of truth mutates. If a cache invalidation gets mishandled, it can indefinitely leave inconsistent values in the cache that are different from what’s in the source of truth.</span></p>
+<p><span style="font-weight: 400;">Cache invalidation involves an action that has to be carried out by something other than the cache itself. Something (e.g., a client or a pub/sub system) needs to tell the cache that a mutation happened. A cache that solely depends on time to live (TTL) to maintain its freshness contains no cache invalidations and, as such, lies out of scope for this discussion. For the rest of this post, we’ll assume the presence of cache invalidation.</span></p>
+<p><span style="font-weight: 400;">Why is this seemingly straightforward process considered such a difficult problem in computer science? Here’s a simple example of how a cache inconsistency could be introduced: </span></p>
+<p><img decoding="async" fetchpriority="high" class="alignnone size-large wp-image-18829" src="https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-1.png?w=1024" alt="cache invalidations" width="1024" height="320" srcset="https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-1.png 1999w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-1.png?resize=916,286 916w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-1.png?resize=768,240 768w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-1.png?resize=1024,320 1024w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-1.png?resize=1536,479 1536w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-1.png?resize=96,30 96w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-1.png?resize=192,60 192w" sizes="(max-width: 992px) 100vw, 62vw" /></p>
+<p><span style="font-weight: 400;">The cache first tries to fill </span><i><span style="font-weight: 400;">x</span></i><span style="font-weight: 400;"> from the database. But before the reply “x=42” reaches the cache host, someone mutates </span><i><span style="font-weight: 400;">x</span></i><span style="font-weight: 400;"> to 43. The cache invalidation event for “x=43” arrives at the cache host first, setting </span><i><span style="font-weight: 400;">x</span></i><span style="font-weight: 400;"> to 43. Finally, “x=42” in the cache fill reply gets to the cache, setting </span><i><span style="font-weight: 400;">x</span></i><span style="font-weight: 400;"> to 42. Now we have “x=43” in the database and “x=42” in the cache indefinitely. </span></p>
+<p><span style="font-weight: 400;">There are different ways to solve this problem, one of which involves maintaining a version field. This allows us to perform conflict resolution, as older data should never overwrite newer data. But what if the cache entry “x=43 @version=2” gets evicted from cache before “x=42” arrives? In that case, the cache host would lose knowledge of the newer data.</span></p>
+<p><span style="font-weight: 400;">The challenge of cache invalidation arises not only from the complexity of invalidation protocols, but also from monitoring cache consistency and determining why these cache inconsistencies occur. Designing a consistent cache is very different from operating a consistent cache — much like designing</span><a href="https://engineering.fb.com/2022/03/07/core-data/augmenting-flexible-paxos-logdevice/"> <span style="font-weight: 400;">Paxos</span></a><span style="font-weight: 400;">, where the protocol is different from building Paxos that actually works in production.</span></p>
+<h2><span style="font-weight: 400;">Why do we care about cache consistency at all?</span></h2>
+<p><span style="font-weight: 400;">Do we have to solve this intricate cache invalidation problem? Yes. In some cases, cache inconsistencies are almost as bad as data loss on a database. From the user’s perspective, it can even be indistinguishable from data loss.</span></p>
+<p><span style="font-weight: 400;">Let’s examine another example of how cache inconsistencies can lead to split-brain. A messaging use case at Meta stores its mapping from user to primary storage in</span><a href="https://engineering.fb.com/2013/06/25/core-data/tao-the-power-of-the-graph/"> <span style="font-weight: 400;">TAO</span></a><span style="font-weight: 400;">. It performs shuffling frequently to keep the user&#8217;s primary message storage close to where the user accesses Meta. Every time you send a message to someone, behind the scenes, the system queries TAO to find out where to store the message. Many years ago, when TAO was less consistent, some TAO replicas would have inconsistent data after reshuffling, as illustrated in the example below.</span></p>
+<p><span style="font-weight: 400;">Imagine that after shuffling Alice’s primary message store from region 2 to region 1, two people, Bob and Mary, both sent messages to Alice. When Bob sent a message to Alice, the system queried the TAO replica in a region close to where Bob lives and sent the message to region 1. When Mary sent a message to Alice, it queried the TAO replica in a region close to where Mary lives, hit the inconsistent TAO replica, and sent the message to region 2. Mary and Bob sent their messages to different regions, and neither region/store had a complete copy of Alice’s messages. </span></p>
+<p><img decoding="async" class="alignnone size-large wp-image-18830" src="https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-2.png?w=1024" alt="cache invalidations" width="1024" height="508" srcset="https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-2.png 1524w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-2.png?resize=916,454 916w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-2.png?resize=768,381 768w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-2.png?resize=1024,508 1024w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-2.png?resize=96,48 96w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-2.png?resize=192,95 192w" sizes="(max-width: 992px) 100vw, 62vw" /></p>
+<h2><span style="font-weight: 400;">A mental model of cache invalidation</span></h2>
+<p><img decoding="async" class="alignnone size-large wp-image-18831" src="https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-3.png?w=1024" alt="cache invalidations" width="1024" height="429" srcset="https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-3.png 1414w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-3.png?resize=916,384 916w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-3.png?resize=768,322 768w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-3.png?resize=1024,429 1024w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-3.png?resize=96,40 96w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-3.png?resize=192,80 192w" sizes="(max-width: 992px) 100vw, 62vw" /></p>
+<p><span style="font-weight: 400;">Understanding the unique challenges of cache invalidation is particularly challenging. Let’s start with a simple mental model. A cache, at its very core, is a stateful service that stores data in an addressable storage medium. Distributed systems are essentially state machines. If every state transition is performed correctly, we will have a distributed system that works as expected. Otherwise, we’ll have a problem. So, the key question is: What’s changing the data for a stateful service? </span></p>
+<p><img decoding="async" loading="lazy" class="alignnone size-large wp-image-18832" src="https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-4.png?w=1024" alt="cache invalidations" width="1024" height="503" srcset="https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-4.png 1999w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-4.png?resize=916,450 916w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-4.png?resize=768,377 768w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-4.png?resize=1024,503 1024w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-4.png?resize=1536,754 1536w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-4.png?resize=96,47 96w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-4.png?resize=192,94 192w" sizes="(max-width: 992px) 100vw, 62vw" /></p>
+<p><span style="font-weight: 400;">A static cache has a very simple cache model (e.g., a simplified CDN fits this model). Data is immutable. No cache invalidations. For databases, data gets mutated only on writes (or replications). We often have logs for almost every state change for a database. Whenever an anomaly occurs, the logs can help us understand what happened, narrow down the problem, and identify the issue. Building a fault-tolerant distributed database (which is already difficult) comes with its own set of unique challenges. These are just simplified mental models. We do not intend to minimize anyone’s struggles. </span></p>
+<p><img decoding="async" loading="lazy" class="alignnone size-large wp-image-18833" src="https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-5.png?w=1024" alt="cache invalidations" width="1024" height="592" srcset="https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-5.png 1999w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-5.png?resize=916,529 916w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-5.png?resize=768,444 768w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-5.png?resize=1024,592 1024w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-5.png?resize=1536,887 1536w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-5.png?resize=96,55 96w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-5.png?resize=192,111 192w" sizes="(max-width: 992px) 100vw, 62vw" /></p>
+<p><span style="font-weight: 400;">For a dynamic cache, like </span><a href="https://www.usenix.org/system/files/conference/atc13/atc13-bronson.pdf"><span style="font-weight: 400;">TAO</span></a><span style="font-weight: 400;"> and</span><a href="https://research.facebook.com/publications/scaling-memcache-at-facebook/"> <span style="font-weight: 400;">Memcache</span></a><span style="font-weight: 400;">, data gets mutated on both read (cache fill) and write (cache invalidation) paths. This exact conjunction makes many race conditions possible and cache invalidation a difficult problem. Data in cache is not durable, which means that sometimes version information that is important for conflict resolution can get evicted. In combining all these characteristics, a dynamic cache produces race conditions beyond your wildest imagination.</span></p>
+<p><span style="font-weight: 400;">And it’s almost impractical to log and trace every cache state change. A cache often gets introduced to scale a read-heavy workload. It implies that most of the cache state changes transpire from the cache fill path. Take TAO, for example. It serves more than one quadrillion queries a day. Even if the cache hit rate reaches 99 percent, we would be doing more than 10 trillion cache fills a day. Logging and tracing all the cache state changes would turn a read-heavy cache workload to an extremely write-heavy workload for the logging system. Debugging a distributed system already presents significant challenges. Debugging a distributed system — in this case, a distributed cache — without logs or traces for cache state changes could be impossible.</span></p>
+<p><span style="font-weight: 400;">Despite these challenges, we improved TAO’s cache consistency, by one measure, from 99.9999 to 99.99999999 over the years. In the rest of the post, we will explain how we did it and highlight some future work. </span></p>
+<h2><span style="font-weight: 400;">Reliable consistency observability</span></h2>
+<p><span style="font-weight: 400;">To solve cache invalidation and cache consistency, the first step involves measurement. We want to measure cache consistency and sound an alarm when there are inconsistent entries in the cache. The measurement can’t contain any false positives. Human brains can easily tune out noises. If any false positives existed, people would quickly learn to ignore it and the metric would lose trust and become useless. We also need the measurement to be precise, as we talk about measuring up to more than 10 nines of consistency. If a consistency fix is landed, we want to assure we can quantitatively measure its improvement. </span></p>
+<p><img decoding="async" loading="lazy" class="alignnone size-large wp-image-18834" src="https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-6.png?w=1024" alt="cache invalidations" width="1024" height="566" srcset="https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-6.png 1999w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-6.png?resize=916,506 916w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-6.png?resize=768,424 768w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-6.png?resize=1024,566 1024w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-6.png?resize=1536,848 1536w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-6.png?resize=96,53 96w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-6.png?resize=192,106 192w" sizes="(max-width: 992px) 100vw, 62vw" /></p>
+<p><span style="font-weight: 400;">To solve the measurement problem, we built a service called Polaris. For any anomaly in a stateful service, it is an anomaly only if clients can observe it one way or the other. Otherwise, we argue that it doesn’t matter at all. Based on this principle, Polaris focuses on measuring the violations of client-observable invariants.</span></p>
+<p><span style="font-weight: 400;">At a high level, Polaris interacts with a stateful service as a client and assumes no knowledge of the service internals. This allows it to be generic. We have dozens of Polaris integrations at Meta. “Cache should eventually be consistent with the database” is a typical client-observable invariant that Polaris monitors, especially in the presence of asynchronous cache invalidation. In this case, Polaris pretends to be a cache server and receives cache invalidation events. For example, if Polaris receives an invalidation event that says “x=4 @version 4,” it then queries all cache replicas as a client to verify whether any violations of the invariant occur. If one cache replica returns “x=3 @version 3,” Polaris flags it as inconsistent and requeues the sample to later check it against the same target cache host. Polaris reports inconsistencies at certain timescales, e.g., one minute, five minutes or 10 minutes. If this sample still shows as inconsistent after one minute, Polaris reports it as an inconsistency for the corresponding timescale.</span></p>
+<p><span style="font-weight: 400;">This multi-timescale design not only allows Polaris to have multiple queues internally to implement backoff and retries efficiently, but it’s also essential for preventing it from producing false positives.</span></p>
+<p><span style="font-weight: 400;">Let’s take a look at a more interesting example: Say Polaris receives an invalidation with “x=4 @version 4.” But when it queries a cache replica, it gets a reply saying </span><i><span style="font-weight: 400;">x</span></i><span style="font-weight: 400;"> doesn’t exist. It’s not clear whether Polaris should flag this as an inconsistency. It’s possible that </span><i><span style="font-weight: 400;">x</span></i><span style="font-weight: 400;"> was invisible at version 3, the version 4 write is the latest write on the key, and it’s indeed a cache inconsistency. It’s also possible that there’s a version 5 write that deletes the key </span><i><span style="font-weight: 400;">x</span></i><span style="font-weight: 400;">, and perhaps Polaris is just seeing a more recent view of the data than what’s in the invalidation event.</span></p>
+<p><span style="font-weight: 400;">To disambiguate between these two cases, we would need to bypass cache and check what’s in the database. Queries that bypass cache are very compute-intensive. They also expose the database to risks — not surprisingly because protecting the database and scaling a read-heavy workload is one of the most common use cases for caches. So, we can’t send too many queries to the system that bypasses the cache. Polaris solves this problem by delaying performing the compute-intensive operation until an inconsistent sample crosses the reporting timescale (e.g., one minute or five minutes). Real cache inconsistencies and racing write operations on the same key are rare. As a result, retrying the consistency check (before it crosses the next timescale boundary) helps remove most of the demand to perform these cache bypass queries.</span></p>
+<p><span style="font-weight: 400;">We also added a special flag to the query that Polaris sends to the cache server. So, in the reply, Polaris would know whether the target cache server has seen and processed the cache invalidation event. This bit of information enables Polaris to distinguish between transient cache inconsistencies (usually caused by replication/invalidation lag) and “permanent” cache inconsistencies — when a stale value is in cache indefinitely after processing the latest invalidation event. </span></p>
+<p><span style="font-weight: 400;">Polaris produces a metric that looks like “N nines of cache writes are consistent in M minutes.” At the beginning of the post, we mentioned that by one measure we improved TAO’s cache consistency from 99.9999 percent to 99.99999999 percent. Polaris provided these numbers for the five minute timescale. In other words, 99.99999999 percent of cache writes are consistent within five minutes. Less than 1 out of 10 billion cache writes would be inconsistent in TAO after five minutes.</span></p>
+<p><span style="font-weight: 400;">We deploy Polaris as a separate service so that it will scale independently from the production service and its workload. If we want to measure up to more nines, we can just increase Polaris throughput or perform aggregation over a longer time window. </span></p>
+<h2><span style="font-weight: 400;">Consistency tracing</span></h2>
+<p><span style="font-weight: 400;">In most diagrams, we use one simple box to represent cache. In reality, it looks more like the following, even after omitting many dependencies and data flows: </span></p>
+<p><img decoding="async" loading="lazy" class="alignnone size-large wp-image-18835" src="https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-7.png?w=1024" alt="cache invalidations" width="1024" height="557" srcset="https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-7.png 1740w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-7.png?resize=916,498 916w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-7.png?resize=768,418 768w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-7.png?resize=1024,557 1024w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-7.png?resize=1536,835 1536w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-7.png?resize=96,52 96w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-7.png?resize=192,104 192w" sizes="(max-width: 992px) 100vw, 62vw" /></p>
+<p><span style="font-weight: 400;">Caches can fill from different upstreams at different points in time, within or across regions. Promotions, shard moves, failure recoveries, network partitions, and hardware failures can all potentially trigger bugs that lead to cache inconsistencies. </span></p>
+<p><span style="font-weight: 400;">However, as mentioned earlier, logging and tracing every cache data change is almost impractical. But what if we only log and trace cache mutations where and when cache inconsistencies can get introduced (or cache invalidations can possibly be mishandled)? Within this massive and complex distributed system, where a single flaw in any component can lead to cache inconsistencies, is it possible to find a place where most if not all cache inconsistencies get introduced? </span></p>
+<p><span style="font-weight: 400;">Our task becomes finding a simple solution to help us manage this complexity. We want to assess the entire cache consistency problem from a single cache server’s perspective. At the end of the day, an inconsistency has to materialize on a cache server. From its perspective, it cares about only a few aspects:</span><span style="font-weight: 400;"><br />
+</span></p>
+<ul>
+<li style="font-weight: 400;" aria-level="1"><span style="font-weight: 400;">Did it receive the invalidate?</span></li>
+<li style="font-weight: 400;" aria-level="1"><span style="font-weight: 400;">Did it process the invalidate correctly?</span></li>
+<li style="font-weight: 400;" aria-level="1"><span style="font-weight: 400;">Did the item become inconsistent afterwards? </span></li>
+</ul>
+<p>&nbsp;</p>
+<p><img decoding="async" loading="lazy" class="alignnone size-large wp-image-18836" src="https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-8.png?w=1024" alt="cache invalidations" width="1024" height="503" srcset="https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-8.png 1516w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-8.png?resize=916,450 916w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-8.png?resize=768,377 768w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-8.png?resize=1024,503 1024w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-8.png?resize=96,47 96w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-8.png?resize=192,94 192w" sizes="(max-width: 992px) 100vw, 62vw" /></p>
+<p><span style="font-weight: 400;">This is the same example we explained at the beginning of the post, now illustrated on a space-time diagram. If we focus on the cache host timeline at the bottom, we see that after a client write, there’s a window in which both the invalidation and the cache fill can race to update the cache. After a while, the cache will be in a quiescent state. Cache fills can still happen in high volume in this state, but from a consistency perspective, it holds less interest, given there are no writes and it’s reduced to a static cache. </span></p>
+<p><span style="font-weight: 400;">We built a stateful tracing library that logs and traces cache mutations in this small purple window, where all the interesting and complicated interactions trigger bugs that lead to cache inconsistencies. It covers cache evictions, and even the absence of the log can tell us if the invalidate event never arrives. It’s embedded into a few major cache services and throughout the invalidation pipeline. It buffers an index of recently modified data, used to determine whether subsequent cache state changes should be logged. And it supports code tracing, so we’ll know the exact code path for every traced query. </span></p>
+<p><span style="font-weight: 400;">This methodology has helped us find and fix many flaws. It offers a systemic and much more scalable approach to diagnosing cache inconsistencies. It has proved to be very effective. </span></p>
+<h2><span style="font-weight: 400;">A real bug we found and fixed this year</span></h2>
+<p><img decoding="async" loading="lazy" class="alignnone size-large wp-image-18837" src="https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-9.png?w=1024" alt="cache invalidations" width="1024" height="382" srcset="https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-9.png 1999w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-9.png?resize=916,341 916w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-9.png?resize=768,286 768w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-9.png?resize=1024,382 1024w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-9.png?resize=1536,572 1536w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-9.png?resize=96,36 96w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-9.png?resize=192,72 192w" sizes="(max-width: 992px) 100vw, 62vw" /></p>
+<p><span style="font-weight: 400;">In one system, we version each piece of data for ordering and conflict resolution. In this case, we observed “metadata=0 @version 4” in the cache, while the database contained “metadata=1 @version 4.” The cache stayed inconsistent indefinitely. This state should have been impossible. Pause for a second and consider: How would you approach this problem? How nice would it be if we got the complete timeline of every single step that led to the final inconsistent state?</span></p>
+<p><span style="font-weight: 400;">Consistency tracing provided exactly the timeline we needed. </span></p>
+<p><img decoding="async" loading="lazy" class="alignnone size-large wp-image-18838" src="https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-10.png?w=1024" alt="cache invalidations" width="1024" height="387" srcset="https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-10.png 1999w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-10.png?resize=916,346 916w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-10.png?resize=768,290 768w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-10.png?resize=1024,387 1024w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-10.png?resize=1536,580 1536w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-10.png?resize=96,36 96w, https://engineering.fb.com/wp-content/uploads/2022/06/Cache-made-consisent-image-10.png?resize=192,73 192w" sizes="(max-width: 992px) 100vw, 62vw" /></p>
+<p><span style="font-weight: 400;">In the system, a very rare operation updates two tables of the underlying database transactionally — the metadata table and the version table. </span><span style="font-weight: 400;"> </span></p>
+<p><span style="font-weight: 400;">Based on consistency tracing, we know the following happened:</span></p>
+<ol>
+<li style="list-style-type: none;">
+<ol>
+<li style="font-weight: 400;" aria-level="1"><span style="font-weight: 400;">The cache tried to fill the metadata with version.</span></li>
+<li style="font-weight: 400;" aria-level="1"><span style="font-weight: 400;"> </span><span style="font-weight: 400;">In the first round, the cache first filled the old metadata.</span></li>
+<li style="font-weight: 400;" aria-level="1"><span style="font-weight: 400;">Next, a write transaction updated both the metadata table and the version table atomically.</span></li>
+<li style="font-weight: 400;" aria-level="1"><span style="font-weight: 400;">In the second round, the cache filled the new version data. Here, the cache fill operation interleaved with the database transaction. It happens very rarely because the racing window is tiny. You might be thinking, “This is the bug.”. No. Actually, so far everything worked as expected because cache invalidation is supposed to bring the cache to a consistent state.</span></li>
+<li style="font-weight: 400;" aria-level="1"><span style="font-weight: 400;">Later, cache invalidation came during an attempt to update the cache entry to both the new metadata and the new version. This almost always works, but this time it didn’t. </span></li>
+<li style="font-weight: 400;" aria-level="1"><span style="font-weight: 400;">The cache invalidation ran into a rare transient error on the cache host, which triggered the error handling code.</span></li>
+<li style="font-weight: 400;" aria-level="1"><span style="font-weight: 400;">The error handler dropped the item in cache. The pseudocode looks like this:</span></li>
+</ol>
+</li>
+</ol>
+<pre class="line-numbers"><code class="language-none">drop_cache(key, version);</code></pre>
+<p><span style="font-weight: 400;">It says drop the item in cache, if its version is less than specified. However, the inconsistent cache item contained the latest version. So this code did nothing, leaving stale metadata in cache indefinitely. This is the bug. We simplified the example quite a bit here. The actual bug has even more intricacy, with database replication and cross region communication involved. The bug gets triggered only when all steps above occur and happen specifically in this sequence. The inconsistency gets triggered very rarely. The bug hides in the error handling code behind interleaving operations and transient errors. </span></p>
+<p><span style="font-weight: 400;">Many years ago, finding the root cause of such a bug would take weeks from someone who knew the code and the service inside out, if they were lucky enough to find it at all. In this case, Polaris identified the anomaly and fired an alarm immediately. With information from consistency tracing, it took on-call engineers less than 30 minutes to locate the bug. </span></p>
+<h2><span style="font-weight: 400;">Future cache consistency work</span></h2>
+<p><span style="font-weight: 400;">We’ve shared how we made our caches more consistent with a generic, systemic, and scalable approach. Looking ahead, we want to get the consistency of all our caches as close to 100 percent as physically possible. Consistency for disaggregated secondary indices poses an interesting challenge. We are also measuring and meaningfully improving cache consistency at read time. Finally, we are building a high-level consistency API for distributed systems — think of C++’s std::memory_order, but for distributed systems.</span></p>
+
+		
+	</div><!-- .entry-content -->
+
+
+</article><!-- #post-## -->
+
+<footer class="entry-footer">
+
+	
+</footer><!-- .entry-footer -->
+
+<div class="fb-like"
+	 data-href="https://engineering.fb.com/2022/06/08/core-data/cache-made-consistent/"
+	 data-width=""
+	 data-layout="standard"
+	 data-action="like"
+	 data-size="small"
+	 data-share="true">
+</div>
+
+
+<div class="related-articles">
+	<div class="related-articles__header">
+		<h3 class="related-articles__header__headline">Read More in Core Data</h3>
+		<a
+			aria-label="View all articles in this Core Data"
+			class="related-articles__header__link"
+			href="https://engineering.fb.com/category/core-data/"
+		>
+			View All		</a>
+	</div>
+
+	<div class="article-grids related-articles__grid">
+		<div class="row">
+							<div class="article-grid col-12 col-md-4">
+					
+<article class="post post-18828 type-post status-publish format-standard has-post-thumbnail hentry category-core-data category-developer-tools fb_content_type-article" id="post-19313">
+	<img width="580" height="326" src="https://engineering.fb.com/wp-content/uploads/2021/06/RiB_DeepGray.jpg?w=580&amp;h=326&amp;crop=1" class="attachment-thumbnail size-thumbnail" alt="Tectonic file system: Consolidating Facebook storage infrastructure with" loading="lazy" title="Eng_Blog_Tiles_v4" />
+<header class="entry-header">
+		<div class="entry-header__top">
+			<span class="posted-on">
+				<time class="entry-date published" datetime="2022-09-07T09:30:20-07:00">
+					SEP 7, 2022				</time>
+			</span>
+		</div>
+
+		<div class="entry-title">
+			<div>
+				<a href="https://engineering.fb.com/2022/09/07/open-source/taobench/" rel="bookmark" aria-label="Read More about Open-sourcing TAOBench: An end-to-end social network benchmark">
+					Open-sourcing TAOBench: An end-to-end social network benchmark				</a>
+			</div>
+		</div>
+
+	</header><!-- .entry-header -->
+
+</article><!-- #post-## -->
+				</div><!-- /.article-grid -->
+							<div class="article-grid col-12 col-md-4">
+					
+<article class="post post-18828 type-post status-publish format-standard has-post-thumbnail hentry category-core-data category-developer-tools fb_content_type-article" id="post-18495">
+	<img width="580" height="326" src="https://engineering.fb.com/wp-content/uploads/2022/02/LogDevice_Thumbnail.png?w=580&amp;h=326&amp;crop=1" class="attachment-thumbnail size-thumbnail" alt="" loading="lazy" title="LogDevice_Thumbnail" />
+<header class="entry-header">
+		<div class="entry-header__top">
+			<span class="posted-on">
+				<time class="entry-date published" datetime="2022-03-07T09:00:17-08:00">
+					MAR 7, 2022				</time>
+			</span>
+		</div>
+
+		<div class="entry-title">
+			<div>
+				<a href="https://engineering.fb.com/2022/03/07/core-data/augmenting-flexible-paxos-logdevice/" rel="bookmark" aria-label="Read More about Augmenting Flexible Paxos in LogDevice to improve read availability">
+					Augmenting Flexible Paxos in LogDevice to improve read availability				</a>
+			</div>
+		</div>
+
+	</header><!-- .entry-header -->
+
+</article><!-- #post-## -->
+				</div><!-- /.article-grid -->
+							<div class="article-grid col-12 col-md-4">
+					
+<article class="post post-18828 type-post status-publish format-standard has-post-thumbnail hentry category-core-data category-developer-tools fb_content_type-article" id="post-18261">
+	<img width="580" height="326" src="https://engineering.fb.com/wp-content/uploads/2021/10/RiB_DarkBlue.jpg?w=580&amp;h=326&amp;crop=1" class="attachment-thumbnail size-thumbnail" alt="" loading="lazy" title="RiB_DarkBlue_Tile" />
+<header class="entry-header">
+		<div class="entry-header__top">
+			<span class="posted-on">
+				<time class="entry-date published" datetime="2021-10-26T12:00:42-07:00">
+					OCT 26, 2021				</time>
+			</span>
+		</div>
+
+		<div class="entry-title">
+			<div>
+				<a href="https://engineering.fb.com/2021/10/26/core-data/kangaroo/" rel="bookmark" aria-label="Read More about Kangaroo: A new flash cache optimized for tiny objects">
+					Kangaroo: A new flash cache optimized for tiny objects				</a>
+			</div>
+		</div>
+
+	</header><!-- .entry-header -->
+
+</article><!-- #post-## -->
+				</div><!-- /.article-grid -->
+							<div class="article-grid col-12 col-md-4">
+					
+<article class="post post-18828 type-post status-publish format-standard has-post-thumbnail hentry category-core-data category-developer-tools fb_content_type-article" id="post-18072">
+	<img width="580" height="326" src="https://engineering.fb.com/wp-content/uploads/2021/09/Superpack_Hero_FINAL.jpg?w=580&amp;h=326&amp;crop=1" class="attachment-thumbnail size-thumbnail" alt="Superpack: Pushing the limits of compression in Facebook’s mobile apps" loading="lazy" title="Superpack_Hero_FINAL" />
+<header class="entry-header">
+		<div class="entry-header__top">
+			<span class="posted-on">
+				<time class="entry-date published" datetime="2021-09-13T06:00:26-07:00">
+					SEP 13, 2021				</time>
+			</span>
+		</div>
+
+		<div class="entry-title">
+			<div>
+				<a href="https://engineering.fb.com/2021/09/13/core-data/superpack/" rel="bookmark" aria-label="Read More about Superpack: Pushing the limits of compression in Facebook’s mobile apps">
+					Superpack: Pushing the limits of compression in Facebook’s mobile apps				</a>
+			</div>
+		</div>
+
+	</header><!-- .entry-header -->
+
+</article><!-- #post-## -->
+				</div><!-- /.article-grid -->
+							<div class="article-grid col-12 col-md-4">
+					
+<article class="post post-18828 type-post status-publish format-standard has-post-thumbnail hentry category-core-data category-developer-tools fb_content_type-article" id="post-18046">
+	<img width="580" height="326" src="https://engineering.fb.com/wp-content/uploads/2021/08/CacheLib_hero.jpg?w=580&amp;h=326&amp;crop=1" class="attachment-thumbnail size-thumbnail" alt="CacheLib, Facebook’s open source caching engine for web-scale services" loading="lazy" title="CacheLib_hero" />
+<header class="entry-header">
+		<div class="entry-header__top">
+			<span class="posted-on">
+				<time class="entry-date published" datetime="2021-09-02T09:00:27-07:00">
+					SEP 2, 2021				</time>
+			</span>
+		</div>
+
+		<div class="entry-title">
+			<div>
+				<a href="https://engineering.fb.com/2021/09/02/open-source/cachelib/" rel="bookmark" aria-label="Read More about CacheLib, Facebook’s open source caching engine for web-scale services">
+					CacheLib, Facebook’s open source caching engine for web-scale services				</a>
+			</div>
+		</div>
+
+	</header><!-- .entry-header -->
+
+</article><!-- #post-## -->
+				</div><!-- /.article-grid -->
+							<div class="article-grid col-12 col-md-4">
+					
+<article class="post post-18828 type-post status-publish format-standard has-post-thumbnail hentry category-core-data category-developer-tools fb_content_type-article" id="post-18025">
+	<img width="580" height="326" src="https://engineering.fb.com/wp-content/uploads/2021/03/RiB_LightNavy.jpg?w=580&amp;h=326&amp;crop=1" class="attachment-thumbnail size-thumbnail" alt="HHVM Jump-Start: Boosting the performance of virtual machines" loading="lazy" title="RiB_LightNavy_tile" />
+<header class="entry-header">
+		<div class="entry-header__top">
+			<span class="posted-on">
+				<time class="entry-date published" datetime="2021-08-18T09:00:37-07:00">
+					AUG 18, 2021				</time>
+			</span>
+		</div>
+
+		<div class="entry-title">
+			<div>
+				<a href="https://engineering.fb.com/2021/08/18/core-data/ramp-tao/" rel="bookmark" aria-label="Read More about RAMP-TAO: Layering atomic transactions on Facebook’s online graph store">
+					RAMP-TAO: Layering atomic transactions on Facebook’s online graph store				</a>
+			</div>
+		</div>
+
+	</header><!-- .entry-header -->
+
+</article><!-- #post-## -->
+				</div><!-- /.article-grid -->
+					</div><!-- /.row -->
+	</div><!--/.article-grids -->
+
+</div><!-- /.related-articles -->
+
+					
+	 <!-- include the carousel nav here. -->
+
+		
+				
+			
+		</main><!-- #main -->
+
+	</div><!-- #primary -->
+
+		<!-- Do the right sidebar check. -->
+	
+
+
+  
+<div class="col-md-4 widget-area" id="right-sidebar" role="complementary">
+	<aside id="fb_related_post_widget-4" class="widget widget_fb_related_post_widget"><h3 class="widget-title">Related Posts</h3><hr>
+            <div class="aside-related-projects"><div class="article-grid-redesign">
+              <article class="post-5896 post type-post status-publish has-post-thumbnail hentry" id="post-5896">
+								<a href="https://engineering.fb.com/2013/06/25/core-data/tao-the-power-of-the-graph/" rel="bookmark" aria-label="Read More about TAO: The power of the graph">
+									<img width="580" height="326" src="https://engineering.fb.com/wp-content/uploads/2013/06/Shard-Image-Update_01-01.jpg?w=580&#038;h=326&#038;crop=1" class="wp-post-image" alt="" srcset="https://engineering.fb.com/wp-content/uploads/2013/06/Shard-Image-Update_01-01.jpg?w=580&#038;h=326&#038;crop=1 580w, https://engineering.fb.com/wp-content/uploads/2013/06/Shard-Image-Update_01-01.jpg?w=580&#038;h=326&#038;crop=1 326w" sizes="(max-width: 580px) 100vw, 580px" loading="lazy">
+									<header class="entry-header">
+										<span class="posted-on"><time class="entry-date published" datetime="Jun 25, 2013">Jun 25, 2013</time></span>
+										<h4 class="entry-title">TAO: The power of the graph</h4>
+									</header><!-- .entry-header -->
+								</a>
+              </article><!-- #post-## -->
+              </div><div class="article-grid-redesign">
+              <article class="post-18046 post type-post status-publish has-post-thumbnail hentry" id="post-18046">
+								<a href="https://engineering.fb.com/2021/09/02/open-source/cachelib/" rel="bookmark" aria-label="Read More about CacheLib, Facebook’s open source caching engine for web-scale services">
+									<img width="580" height="326" src="https://engineering.fb.com/wp-content/uploads/2021/08/CacheLib_hero.jpg?w=580&#038;h=326&#038;crop=1" class="wp-post-image" alt="" srcset="https://engineering.fb.com/wp-content/uploads/2021/08/CacheLib_hero.jpg?w=580&#038;h=326&#038;crop=1 580w, https://engineering.fb.com/wp-content/uploads/2021/08/CacheLib_hero.jpg?w=580&#038;h=326&#038;crop=1 326w" sizes="(max-width: 580px) 100vw, 580px" loading="lazy">
+									<header class="entry-header">
+										<span class="posted-on"><time class="entry-date published" datetime="Sep 02, 2021">Sep 02, 2021</time></span>
+										<h4 class="entry-title">CacheLib, Facebook’s open source caching engine for web-scale services</h4>
+									</header><!-- .entry-header -->
+								</a>
+              </article><!-- #post-## -->
+              </div><div class="article-grid-redesign">
+              <article class="post-18495 post type-post status-publish has-post-thumbnail hentry" id="post-18495">
+								<a href="https://engineering.fb.com/2022/03/07/core-data/augmenting-flexible-paxos-logdevice/" rel="bookmark" aria-label="Read More about Augmenting Flexible Paxos in LogDevice to improve read availability">
+									<img width="580" height="326" src="https://engineering.fb.com/wp-content/uploads/2022/02/LogDevice_Thumbnail.png?w=580&#038;h=326&#038;crop=1" class="wp-post-image" alt="" srcset="https://engineering.fb.com/wp-content/uploads/2022/02/LogDevice_Thumbnail.png?w=580&#038;h=326&#038;crop=1 580w, https://engineering.fb.com/wp-content/uploads/2022/02/LogDevice_Thumbnail.png?w=580&#038;h=326&#038;crop=1 326w" sizes="(max-width: 580px) 100vw, 580px" loading="lazy">
+									<header class="entry-header">
+										<span class="posted-on"><time class="entry-date published" datetime="Mar 07, 2022">Mar 07, 2022</time></span>
+										<h4 class="entry-title">Augmenting Flexible Paxos in LogDevice to improve read availability</h4>
+									</header><!-- .entry-header -->
+								</a>
+              </article><!-- #post-## -->
+              </div></div></aside><aside id="wpb_widget-3" class="widget widget_wpb_widget"><h3 class="widget-title">Related Positions</h3><hr><ul class="available-positions-list"><li class="available-positions-item">
+                          <a href=https://www.metacareers.com/jobs/1226166568011013/>
+                      		<div class="job-description">
+                      			Data Engineer, Product Analytics
+                      		</div>
+                      		<div class="job-location">
+                      			LONDON, UNITED KINGDOM
+                      		</div>
+                          </a>
+                      	</li><li class="available-positions-item">
+                          <a href=https://www.metacareers.com/jobs/827776451923624/>
+                      		<div class="job-description">
+                      			Marketing Data Scientist, Reality Labs
+                      		</div>
+                      		<div class="job-location">
+                      			LOS ANGELES, US
+                      		</div>
+                          </a>
+                      	</li><li class="available-positions-item">
+                          <a href=https://www.metacareers.com/jobs/827776451923624/>
+                      		<div class="job-description">
+                      			Marketing Data Scientist, Reality Labs
+                      		</div>
+                      		<div class="job-location">
+                      			REMOTE, US
+                      		</div>
+                          </a>
+                      	</li><li class="available-positions-item">
+                          <a href=https://www.metacareers.com/jobs/590499743161164/>
+                      		<div class="job-description">
+                      			Localization Program Manager
+                      		</div>
+                      		<div class="job-location">
+                      			BELLEVUE, US
+                      		</div>
+                          </a>
+                      	</li><li class="available-positions-item">
+                          <a href=https://www.metacareers.com/jobs/590499743161164/>
+                      		<div class="job-description">
+                      			Localization Program Manager
+                      		</div>
+                      		<div class="job-location">
+                      			MENLO PARK, US
+                      		</div>
+                          </a>
+                      	</li>		</ul>
+		<a href="https://www.metacareers.com">
+			<div class="btn available-positions-btn">
+				See All Jobs			</div>
+		</a>
+		</aside>
+</div><!-- #secondary -->
+
+
+
+	<!-- <php get_template_part('content-single-side-bar'); ?> -->
+
+	<!-- Do the right sidebar check. -->
+	
+</div><!-- Container end -->
+
+</div><!-- Wrapper end -->
+
+</div>
+
+	<!-- ******************* The Footer Full-width Widget Area ******************* -->
+
+	<div class="wrapper wrapper-community-outer">
+		<div class="wrapper-community">
+
+			<div class="community" tabindex="-1">
+
+				<div class="row">
+					<!-- community section is generated through WordPress widget -->
+					<div id="wpb_widget-2" class="footer-widget widget_wpb_widget widget-count-3 col-md-4"><h3 class="widget-title">Available Positions</h3><hr><ul class="available-positions-list"><li class="available-positions-item">
+                          <a href=https://www.metacareers.com/jobs/1226166568011013/>
+                      		<div class="job-description">
+                      			Data Engineer, Product Analytics
+                      		</div>
+                      		<div class="job-location">
+                      			LONDON, UNITED KINGDOM
+                      		</div>
+                          </a>
+                      	</li><li class="available-positions-item">
+                          <a href=https://www.metacareers.com/jobs/827776451923624/>
+                      		<div class="job-description">
+                      			Marketing Data Scientist, Reality Labs
+                      		</div>
+                      		<div class="job-location">
+                      			LOS ANGELES, US
+                      		</div>
+                          </a>
+                      	</li><li class="available-positions-item">
+                          <a href=https://www.metacareers.com/jobs/827776451923624/>
+                      		<div class="job-description">
+                      			Marketing Data Scientist, Reality Labs
+                      		</div>
+                      		<div class="job-location">
+                      			REMOTE, US
+                      		</div>
+                          </a>
+                      	</li><li class="available-positions-item">
+                          <a href=https://www.metacareers.com/jobs/590499743161164/>
+                      		<div class="job-description">
+                      			Localization Program Manager
+                      		</div>
+                      		<div class="job-location">
+                      			BELLEVUE, US
+                      		</div>
+                          </a>
+                      	</li><li class="available-positions-item">
+                          <a href=https://www.metacareers.com/jobs/590499743161164/>
+                      		<div class="job-description">
+                      			Localization Program Manager
+                      		</div>
+                      		<div class="job-location">
+                      			MENLO PARK, US
+                      		</div>
+                          </a>
+                      	</li>		</ul>
+		<a href="https://www.metacareers.com">
+			<div class="btn available-positions-btn">
+				See All Jobs			</div>
+		</a>
+		</div><!-- .footer-widget --><div id="custom_html-2" class="widget_text footer-widget widget_custom_html widget-count-3 col-md-4"><h3 class="widget-title">Stay Connected</h3><div class="textwidget custom-html-widget"><ul class="stay-connected-lists">
+	<li class="stay-connected-item">
+		<img class="footer-fb-engineering stay-connected-item-left" src="/wp-content/themes/code-fb-com/img/datahallway_thumb.jpg"  alt="footer-fb-engineering" loading="lazy" width="70" height="70">
+		<div class="stay-connected-item-right">
+			<div class="stay-connected-label">
+				Engineering at Meta	
+			</div>
+			<a href="https://www.facebook.com/Engineering/">
+			<button class="btn stay-connected-btn">
+				Like
+			</button>
+			</a>
+		</div>
+	</li>
+	<li class="stay-connected-item">
+		<img class="stay-connected-item-left" src="/wp-content/themes/code-fb-com/img/fbopensource.png" alt="footer-fbopensource" loading="lazy" width="70" height="70">
+		<div class="stay-connected-item-right">
+			<div class="stay-connected-label">
+				Meta Open Source
+			</div>
+			<a onclick='return twitterFollow("metaOpenSource")'>
+			<button class="btn stay-connected-btn">
+				Follow
+				</button>
+			</a>
+		</div>
+	</li>
+	<li class="stay-connected-item">
+		<img class="stay-connected-item-left facebook-research" src="/wp-content/themes/code-fb-com/img/meta_logo.png" alt="footer-research" loading="lazy" width="70" height="70">
+		<div class="stay-connected-item-right">
+			<div class="stay-connected-label">
+				Meta Research
+			</div>
+			<a href="https://www.facebook.com/MetaResearch">
+			<button class="btn stay-connected-btn">
+				Like
+			</button>
+			</a>
+		</div>
+	</li>
+	<li class="stay-connected-item">
+		<img class="stay-connected-item-left facebook-developers" src="/wp-content/themes/code-fb-com/img/facebook-developers.png" alt="footer-developers" loading="lazy" width="70" height="70">
+		<div class="stay-connected-item-right">
+			<div class="stay-connected-label">
+				Meta for Developers
+			</div>
+			<a href=" https://www.facebook.com/MetaforDevelopers">
+			<button class="btn stay-connected-btn">
+				Like
+			</button>
+			</a>
+		</div>
+	</li>
+	<li class="stay-connected-item">
+		<img class="stay-connected-item-left" src="/wp-content/themes/code-fb-com/img/rss.png" alt="footer-rss" loading="lazy" width="70" height="70">
+		<div class="stay-connected-item-right">
+			<div class="stay-connected-label">
+				RSS
+			</div>
+			<a href="https://code.facebook.com/posts/rss/">
+			<button class="btn stay-connected-btn">
+				Subscribe
+			</button>
+			</a>
+		</div>
+	</li>
+</ul></div></div><!-- .footer-widget --><div id="custom_html-3" class="widget_text footer-widget widget_custom_html widget-count-3 col-md-4"><h3 class="widget-title">Open Source</h3><div class="textwidget custom-html-widget"><p class="opensource-desc">
+	Meta believes in building community through open source technology. Explore our latest projects in Artificial Intelligence, Data Infrastructure, Development Tools, Front End, Languages, Platforms, Security, Virtual Reality, and more.
+</p>
+<ul class="opensource-cats">
+	<li class="opensource-cat">
+		<img src="/wp-content/themes/code-fb-com/img/android.png" alt="android" loading="lazy" width="50" height="59">
+		<div class="opensource-cap">
+			ANDROID
+		</div>
+	</li>
+	<li class="opensource-cat">
+		<img src="/wp-content/themes/code-fb-com/img/ios.png" alt="ios" loading="lazy" width="48" height="58">
+		<div class="opensource-cap">
+			iOS
+		</div>
+	</li>
+	<li class="opensource-cat">
+		<img src="/wp-content/themes/code-fb-com/img/web.png" alt="web" loading="lazy" width="55" height="49">
+		<div class="opensource-cap">		
+			WEB
+		</div>
+	</li>
+	<li class="opensource-cat">
+		<img src="/wp-content/themes/code-fb-com/img/backend.png" alt="backend" loading="lazy" width="56" height="51">
+		<div class="opensource-cap">
+			BACKEND
+		</div>
+	</li>
+	<li class="opensource-cat">
+		<img src="/wp-content/themes/code-fb-com/img/hardware.png" alt="hardware" loading="lazy" width="55" height="44">
+		<div class="opensource-cap">
+			HARDWARE
+		</div>
+	</li>
+</ul>
+
+<button class="btn opensource-btn" onclick="window.location.href='https://opensource.fb.com/'">
+	Learn More
+</button>
+
+</div></div><!-- .footer-widget -->
+				</div>
+
+			</div>
+			</div>
+
+	</div><!-- #wrapper-footer-full -->
+
+
+<div class="wrapper-footer" id="wrapper-footer">
+	<div class="inner-container">
+		<div class="footer">
+			<div class="row">
+				<div class="col-md-12">
+					<footer class="meta-footer" id="meta-footer">
+						<div class="site-info row justify-content-between">
+							<div class="col-md-5 meta-logo-container">
+								<a href="https://about.facebook.com/">
+									<img src="https://engineering.fb.com/wp-content/themes/code-fb-com/img/meta_logo_full.svg" width="89" height="18" alt="Meta" />
+								</a>
+								<div id="text-2" class="widget widget_text">			<div class="textwidget"><p>Engineering at Meta is a technical news resource for engineers interested in how we solve large-scale technical challenges at Meta.</p>
+</div>
+		</div>							</div>
+							<div class="col-md-6 footer-meta-links-container">
+														<ul class="meta-footer-links">
+									<li class="footer-link"><a href="https://engineering.fb.com">Home</a></li><li class="footer-link"><a href="https://about.facebook.com">Company Info</a></li><li class="footer-link"><a href="https://facebookcareers.com">Careers</a></li>								</ul>
+							</div>
+						</div>
+					</footer>
+				</div>
+			</div>
+		</div>
+	</div>
+
+		<div class="footer">
+			<div class="row">
+
+				<div class="col-md-12">
+
+					<footer class="site-footer" id="colophon">
+						<div class="inner-container">
+							<div class="site-info row justify-content-between">
+
+								<div class="col-md-4 copyright-container">
+									<div class="copyright"> © 2023 Meta</div>
+								</div>
+
+								<!-- static footer -->
+								<div class="col-md-7 footer-links-container">
+									<ul class="footer-links">
+										<li class="footer-link"><a href="https://www.facebook.com/policies">Terms</a></li><li class="footer-link"><a href="https://www.facebook.com/privacy/policy">Privacy</a></li><li class="footer-link"><a href="/privacy">Cookies</a></li><li class="footer-link"><a href="https://www.facebook.com/help">Help</a></li>									</ul>
+								</div>
+							</div>
+						</div><!-- .site-info -->
+
+					</footer><!-- #colophon -->
+
+				</div><!--col end -->
+
+			</div><!-- row end -->
+
+	</div><!-- //.inner-container -->
+</div><!-- wrapper end -->
+
+</div><!-- #page we need this extra closing tag here -->
+
+  <div class="gdprconsent-container" id="GDPRConsentBar">
+    <div class="gdprconsent-wrapper">
+      <div class="gdprconsent-content">
+        <p>To help personalize content, tailor and measure ads and provide a safer experience, we use cookies. By clicking or navigating the site, you agree to allow our collection of information on and off Facebook through cookies. Learn more, including about available controls: <a href="/privacy">Cookie Policy</a></p>
+                <div class="gdprconsent-button">
+          <button type="button" data-gdpr-accept>Accept</button>
+        </div>
+              </div>
+    </div>
+  </div>
+  	
+	<!-- Twitter universal website tag code -->
+	<script>
+		if (window.gdprSafeTrack) {
+			window.gdprSafeTrack(function() {
+				!function(e,t,n,s,u,a){e.twq||(s=e.twq=function(){s.exe?s.exe.apply(s,arguments):s.queue.push(arguments);
+				},s.version='1.1',s.queue=[],u=t.createElement(n),u.async=!0,u.src='//static.ads-twitter.com/uwt.js',
+				a=t.getElementsByTagName(n)[0],a.parentNode.insertBefore(u,a))}(window,document,'script');
+				// Insert Twitter Pixel ID and Standard Event data below
+				twq('init','o31u0');
+				twq('track','PageView');
+			});
+		}
+	</script>
+	<!-- End Twitter universal website tag code -->
+
+	
+					<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KZRLGZ8" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+		
+					<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=660742068067366&ev=PageView&noscript=1"/></noscript>
+		<script id="video-analytics-js-after" type="text/javascript">
+if (window.gdprSafeTrack) {
+					window.gdprSafeTrack(function() {
+						let youtube = document.querySelectorAll('[src*="youtube-nocookie"]');
+						for (let i = 0; i < youtube.length; i++) {
+							youtube[i].src = youtube[i].src.replace('youtube-nocookie.com', 'youtube.com');
+						}
+						let vimeo = document.querySelectorAll('[src*="vimeo"]');
+						for (let i = 0; i < vimeo.length; i++) {
+							vimeo[i].src = vimeo[i].src.replace('&dnt=true', '');
+						}
+					});
+				}
+</script>
+<script id='child-understrap-scripts-js-extra'>
+var loadmore_params = {"restfulURL":"https:\/\/engineering.fb.com\/wp-json\/fb\/v1\/loadmore","searchText":"","posts":"{\"page\":0,\"year\":2022,\"monthnum\":6,\"day\":8,\"name\":\"cache-made-consistent\",\"category_name\":\"core-data\",\"error\":\"\",\"m\":\"\",\"p\":0,\"post_parent\":\"\",\"subpost\":\"\",\"subpost_id\":\"\",\"attachment\":\"\",\"attachment_id\":0,\"pagename\":\"\",\"page_id\":0,\"second\":\"\",\"minute\":\"\",\"hour\":\"\",\"w\":0,\"tag\":\"\",\"cat\":\"\",\"tag_id\":\"\",\"author\":\"\",\"author_name\":\"\",\"feed\":\"\",\"tb\":\"\",\"paged\":0,\"meta_key\":\"\",\"meta_value\":\"\",\"preview\":\"\",\"s\":\"\",\"sentence\":\"\",\"title\":\"\",\"fields\":\"\",\"menu_order\":\"\",\"embed\":\"\",\"category__in\":[],\"category__not_in\":[],\"category__and\":[],\"post__in\":[],\"post__not_in\":[],\"post_name__in\":[],\"tag__in\":[],\"tag__not_in\":[],\"tag__and\":[],\"tag_slug__in\":[],\"tag_slug__and\":[],\"post_parent__in\":[],\"post_parent__not_in\":[],\"author__in\":[],\"author__not_in\":[],\"search_columns\":[],\"ignore_sticky_posts\":false,\"suppress_filters\":false,\"cache_results\":true,\"update_post_term_cache\":true,\"update_menu_item_cache\":false,\"lazy_load_term_meta\":true,\"update_post_meta_cache\":true,\"post_type\":\"\",\"posts_per_page\":12,\"nopaging\":false,\"comments_per_page\":\"50\",\"no_found_rows\":false,\"order\":\"DESC\"}","current_page":"1","max_page":"0","post_type":"post"};
+var search_params = {"ajaxurl":"https:\/\/engineering.fb.com\/wp-admin\/admin-ajax.php","posts":"{\"page\":0,\"year\":2022,\"monthnum\":6,\"day\":8,\"name\":\"cache-made-consistent\",\"category_name\":\"core-data\",\"error\":\"\",\"m\":\"\",\"p\":0,\"post_parent\":\"\",\"subpost\":\"\",\"subpost_id\":\"\",\"attachment\":\"\",\"attachment_id\":0,\"pagename\":\"\",\"page_id\":0,\"second\":\"\",\"minute\":\"\",\"hour\":\"\",\"w\":0,\"tag\":\"\",\"cat\":\"\",\"tag_id\":\"\",\"author\":\"\",\"author_name\":\"\",\"feed\":\"\",\"tb\":\"\",\"paged\":0,\"meta_key\":\"\",\"meta_value\":\"\",\"preview\":\"\",\"s\":\"\",\"sentence\":\"\",\"title\":\"\",\"fields\":\"\",\"menu_order\":\"\",\"embed\":\"\",\"category__in\":[],\"category__not_in\":[],\"category__and\":[],\"post__in\":[],\"post__not_in\":[],\"post_name__in\":[],\"tag__in\":[],\"tag__not_in\":[],\"tag__and\":[],\"tag_slug__in\":[],\"tag_slug__and\":[],\"post_parent__in\":[],\"post_parent__not_in\":[],\"author__in\":[],\"author__not_in\":[],\"search_columns\":[],\"ignore_sticky_posts\":false,\"suppress_filters\":false,\"cache_results\":true,\"update_post_term_cache\":true,\"update_menu_item_cache\":false,\"lazy_load_term_meta\":true,\"update_post_meta_cache\":true,\"post_type\":\"\",\"posts_per_page\":12,\"nopaging\":false,\"comments_per_page\":\"50\",\"no_found_rows\":false,\"order\":\"DESC\"}","current_page":"1","max_page":"0","article_filter":"56f0d0bf9d"};
+var more_articles = {"next_article":{"label":"Next","permalink":"https:\/\/engineering.fb.com\/2022\/06\/08\/developer-tools\/zelos\/","title":"Introducing Zelos: A ZooKeeper API leveraging Delos","thumbnail":["https:\/\/engineering.fb.com\/wp-content\/uploads\/2022\/06\/Zelos-Hero.png?w=580&h=326&crop=1","580","326",true]},"prev_article":{"label":"Prev","permalink":"https:\/\/engineering.fb.com\/2022\/05\/11\/open-source\/jest-openjs-foundation\/","title":"Meta Open Source is transferring Jest to the OpenJS Foundation","thumbnail":["https:\/\/engineering.fb.com\/wp-content\/uploads\/2022\/05\/JestOpenJs-copy.jpg?w=580&h=326&crop=1","580","326",true]}};
+</script>
+<script id='jetpack-facebook-embed-js-extra'>
+var jpfbembed = {"appid":"249643311490","locale":"en_US"};
+</script>
+<script type="text/javascript" src="https://engineering.fb.com/_static/??-eJx9jUEOwiAQAD/ksik1VQ/Gp5gCW7u0C0SW+H2J8eTB62Qmg68CPielpKgrCVX0ORAsrmPBwFUxdrbyHuAjGOFkYj3g/7JH5clVflVpUPb24FQxkpbZbzBYc8Q7J4+u9Q0usyeX8wYkjsL3d5PrMF3G0Z6ms41v+7xA3w==" ></script>
+</body>
+
+</html>
