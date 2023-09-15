@@ -1,0 +1,688 @@
+<!doctype html>
+<html lang="en-US" class="no-js aws-lng-en_US" xmlns="http://www.w3.org/1999/xhtml" data-aws-assets="https://a0.awsstatic.com" data-js-version="1.0.674" data-css-version="1.0.538" data-static-assets="https://a0.awsstatic.com" prefix="og: https://ogp.me/ns#">
+ <head> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <title>Single-table vs. multi-table design in Amazon DynamoDB | AWS Database Blog</title> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"> 
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: https://a0.awsstatic.com; connect-src 'self' *.akamaized.net *.googlevideo.com/videoplayback https://*.analytics.console.aws.a2z.com https://*.prod.chc-features.uxplatform.aws.dev https://112-tzm-766.mktoresp.com https://112-tzm-766.mktoutil.com https://a0.awsstatic.com https://a0.p.awsstatic.com https://a1.awsstatic.com https://amazonwebservices.d2.sc.omtrdc.net https://amazonwebservicesinc.tt.omtrdc.net https://api.regional-table.region-services.aws.a2z.com https://api.us-west-2.prod.pricing.aws.a2z.com https://aws.demdex.net https://b0.p.awsstatic.com https://c0.b0.p.awsstatic.com https://calculator.aws https://chat.us-east-1.prod.mrc-sunrise.marketing.aws.dev https://chatbot-api.us-east-1.prod.mrc-sunrise.marketing.aws.dev https://cm.everesttech.net https://d0.awsstatic.com https://d1.awsstatic.com https://d1fgizr415o1r6.cloudfront.net https://d2c.aws.amazon.com https://d3borx6sfvnesb.cloudfront.net https://dftu77xade0tc.cloudfront.net https://dpm.demdex.net https://fls-na.amazon.com https://i18n-string.us-west-2.prod.pricing.aws.a2z.com https://infra-api.us-east-1.prod.mrc-sunrise.marketing.aws.dev https://livechat-api.us-east-1.prod.mrc-sunrise.marketing.aws.dev https://pricing-table.us-west-2.prod.site.p.awsstatic.com https://prod-us-west-2.csp-report.marketing.aws.dev https://prod-us-west-2.csp-report.marketing.aws.dev/submit https://prod.log.shortbread.aws.dev https://prod.tools.shortbread.aws.dev https://public.lotus.awt.aws.a2z.com https://s0.awsstatic.com https://s3.amazonaws.com/aws-messaging-pricing-information/ https://s3.amazonaws.com/public-pricing-agc/ https://spot-bid-advisor.s3.amazonaws.com https://t0.m.awsstatic.com https://token.us-west-2.prod.site.p.awsstatic.com https://view-stage.us-west-2.prod.pricing.aws.a2z.com https://view-staging.us-east-1.prod.plc1-prod.pricing.aws.a2z.com https://vs.aws.amazon.com https://www.youtube-nocookie.com https://www.youtube.com wss://*.transport.connect.us-east-1.amazonaws.com; font-src 'self' data: https://a0.awsstatic.com https://c.disquscdn.com https://f0.awsstatic.com https://fonts.gstatic.com; frame-src 'self' https://aws.demdex.net https://c0.b0.p.awsstatic.com https://calculator.aws https://commenting.awsblogs.com https://conversational-experience-worker.widget.console.aws.amazon.com/lotus/isolatedIFrame https://disqus.com https://dpm.demdex.net https://player.vimeo.com https://pricing-table.us-west-2.prod.site.p.awsstatic.com https://token.us-west-2.prod.site.p.awsstatic.com https://www.youtube-nocookie.com https://www.youtube.com; img-src 'self' data: https://*.ads.linkedin.com https://*.vidyard.com https://*.ytimg.com https://a0.awsstatic.com https://amazonwebservices.d2.sc.omtrdc.net https://aws-quickstart.s3.amazonaws.com https://aws.amazon.com https://aws.demdex.net https://awsmedia.s3.amazonaws.com https://chat.us-east-1.prod.mrc-sunrise.marketing.aws.dev https://cm.everesttech.net https://d1.awsstatic.com https://d1d1et6laiqoh9.cloudfront.net https://d2908q01vomqb2.cloudfront.net https://d2c.aws.amazon.com https://d2cpw7vd6a2efr.cloudfront.net https://d36cz9buwru1tt.cloudfront.net https://docs.aws.amazon.com https://dpm.demdex.net https://fls-na.amazon.com https://google.ca https://google.co.in https://google.co.jp https://google.co.th https://google.co.uk https://google.com https://google.com.ar https://google.com.au https://google.com.br https://google.com.hk https://google.com.mx https://google.com.tr https://google.com.tw https://google.de https://google.es https://google.fr https://google.it https://google.nl https://google.pl https://google.ru https://googleads.g.doubleclick.net https://img.youtube.com https://marketingplatform.google.com https://media.amazonwebservices.com https://p.adsymptotic.com https://pages.awscloud.com https://s3.amazonaws.com/aws-quickstart/ https://s3.cn-north-1.amazonaws.com.cn/awschinablog/ https://s3.cn-north-1.amazonaws.com.cn/images-bjs/ https://ssl-static.libsyn.com https://static-cdn.jtvnw.net https://www.google.com https://www.linkedin.com https://yt3.ggpht.com; media-src 'self' https://*.libsyn.com https://a0.awsstatic.com https://anchor.fm https://awsmedia.s3.amazonaws.com https://awspodcastsiberiaent.s3.eu-west-3.amazonaws.com https://chat.us-east-1.prod.mrc-sunrise.marketing.aws.dev https://chtbl.com https://d1.awsstatic.com https://d1hemuljm71t2j.cloudfront.net https://d1le29qyzha1u4.cloudfront.net https://d1oqpvwii7b6rh.cloudfront.net https://d1vo51ubqkiilx.cloudfront.net https://d1yyh5dhdgifnx.cloudfront.net https://d2908q01vomqb2.cloudfront.net https://d2a6igt6jhaluh.cloudfront.net https://d3ctxlq1ktw2nl.cloudfront.net https://d3h2ozso0dirfl.cloudfront.net https://dgen8gghn3u86.cloudfront.net https://dk261l6wntthl.cloudfront.net https://download.stormacq.com/aws/podcast/ https://dts.podtrac.com https://media.amazonwebservices.com https://mktg-apac.s3-ap-southeast-1.amazonaws.com https://s3-ap-northeast-1.amazonaws.com/aws-china-media/ https://www.buzzsprout.com; object-src 'none'; script-src 'nonce-xsp7AIieRU2oQ8SMHCbQKA==' 'self' https://*.cdn.console.awsstatic.com/ https://*.cdn.uis.awsstatic.com/ https://a.b.cdn.console.awsstatic.com https://a0.awsstatic.com https://amazonwebservicesinc.tt.omtrdc.net https://aws-official-blog.disqus.com https://aws-publicsector-blog.disqus.com https://c.disquscdn.com https://chat.us-east-1.prod.mrc-sunrise.marketing.aws.dev https://d2c.aws.amazon.com https://f.vimeocdn.com https://googleads.g.doubleclick.net https://loader.us-east-1.prod.mrc-sunrise.marketing.aws.dev https://referrer.disqus.com https://spot-price.s3.amazonaws.com https://static.doubleclick.net https://t0.m.awsstatic.com https://website.spot.ec2.aws.a2z.com https://www.google.com https://www.gstatic.com https://www.youtube.com/iframe_api https://www.youtube.com/s/player/; style-src 'self' 'unsafe-inline' https://a0.awsstatic.com https://c.disquscdn.com https://f.vimeocdn.com; report-uri https://prod-us-west-2.csp-report.marketing.aws.dev/submit" data-report-uri="https://prod-us-west-2.csp-report.marketing.aws.dev/submit"> 
+  <script src="https://a0.awsstatic.com/libra/1.0.548/csp/csp-report.js"></script> 
+  <meta name="robots" content="max-image-preview:large"> 
+  <link rel="dns-prefetch" href="//a0.awsstatic.com"> 
+  <style id="global-styles-inline-css" type="text/css">
+body{--wp--preset--color--black: #000000;--wp--preset--color--cyan-bluish-gray: #abb8c3;--wp--preset--color--white: #ffffff;--wp--preset--color--pale-pink: #f78da7;--wp--preset--color--vivid-red: #cf2e2e;--wp--preset--color--luminous-vivid-orange: #ff6900;--wp--preset--color--luminous-vivid-amber: #fcb900;--wp--preset--color--light-green-cyan: #7bdcb5;--wp--preset--color--vivid-green-cyan: #00d084;--wp--preset--color--pale-cyan-blue: #8ed1fc;--wp--preset--color--vivid-cyan-blue: #0693e3;--wp--preset--color--vivid-purple: #9b51e0;--wp--preset--gradient--vivid-cyan-blue-to-vivid-purple: linear-gradient(135deg,rgba(6,147,227,1) 0%,rgb(155,81,224) 100%);--wp--preset--gradient--light-green-cyan-to-vivid-green-cyan: linear-gradient(135deg,rgb(122,220,180) 0%,rgb(0,208,130) 100%);--wp--preset--gradient--luminous-vivid-amber-to-luminous-vivid-orange: linear-gradient(135deg,rgba(252,185,0,1) 0%,rgba(255,105,0,1) 100%);--wp--preset--gradient--luminous-vivid-orange-to-vivid-red: linear-gradient(135deg,rgba(255,105,0,1) 0%,rgb(207,46,46) 100%);--wp--preset--gradient--very-light-gray-to-cyan-bluish-gray: linear-gradient(135deg,rgb(238,238,238) 0%,rgb(169,184,195) 100%);--wp--preset--gradient--cool-to-warm-spectrum: linear-gradient(135deg,rgb(74,234,220) 0%,rgb(151,120,209) 20%,rgb(207,42,186) 40%,rgb(238,44,130) 60%,rgb(251,105,98) 80%,rgb(254,248,76) 100%);--wp--preset--gradient--blush-light-purple: linear-gradient(135deg,rgb(255,206,236) 0%,rgb(152,150,240) 100%);--wp--preset--gradient--blush-bordeaux: linear-gradient(135deg,rgb(254,205,165) 0%,rgb(254,45,45) 50%,rgb(107,0,62) 100%);--wp--preset--gradient--luminous-dusk: linear-gradient(135deg,rgb(255,203,112) 0%,rgb(199,81,192) 50%,rgb(65,88,208) 100%);--wp--preset--gradient--pale-ocean: linear-gradient(135deg,rgb(255,245,203) 0%,rgb(182,227,212) 50%,rgb(51,167,181) 100%);--wp--preset--gradient--electric-grass: linear-gradient(135deg,rgb(202,248,128) 0%,rgb(113,206,126) 100%);--wp--preset--gradient--midnight: linear-gradient(135deg,rgb(2,3,129) 0%,rgb(40,116,252) 100%);--wp--preset--duotone--dark-grayscale: url('#wp-duotone-dark-grayscale');--wp--preset--duotone--grayscale: url('#wp-duotone-grayscale');--wp--preset--duotone--purple-yellow: url('#wp-duotone-purple-yellow');--wp--preset--duotone--blue-red: url('#wp-duotone-blue-red');--wp--preset--duotone--midnight: url('#wp-duotone-midnight');--wp--preset--duotone--magenta-yellow: url('#wp-duotone-magenta-yellow');--wp--preset--duotone--purple-green: url('#wp-duotone-purple-green');--wp--preset--duotone--blue-orange: url('#wp-duotone-blue-orange');--wp--preset--font-size--small: 13px;--wp--preset--font-size--medium: 20px;--wp--preset--font-size--large: 36px;--wp--preset--font-size--x-large: 42px;}.has-black-color{color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-color{color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-color{color: var(--wp--preset--color--white) !important;}.has-pale-pink-color{color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-color{color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-color{color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-color{color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-color{color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-color{color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-color{color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-color{color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-color{color: var(--wp--preset--color--vivid-purple) !important;}.has-black-background-color{background-color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-background-color{background-color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-background-color{background-color: var(--wp--preset--color--white) !important;}.has-pale-pink-background-color{background-color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-background-color{background-color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-background-color{background-color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-background-color{background-color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-background-color{background-color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-background-color{background-color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-background-color{background-color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-background-color{background-color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-background-color{background-color: var(--wp--preset--color--vivid-purple) !important;}.has-black-border-color{border-color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-border-color{border-color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-border-color{border-color: var(--wp--preset--color--white) !important;}.has-pale-pink-border-color{border-color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-border-color{border-color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-border-color{border-color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-border-color{border-color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-border-color{border-color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-border-color{border-color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-border-color{border-color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-border-color{border-color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-border-color{border-color: var(--wp--preset--color--vivid-purple) !important;}.has-vivid-cyan-blue-to-vivid-purple-gradient-background{background: var(--wp--preset--gradient--vivid-cyan-blue-to-vivid-purple) !important;}.has-light-green-cyan-to-vivid-green-cyan-gradient-background{background: var(--wp--preset--gradient--light-green-cyan-to-vivid-green-cyan) !important;}.has-luminous-vivid-amber-to-luminous-vivid-orange-gradient-background{background: var(--wp--preset--gradient--luminous-vivid-amber-to-luminous-vivid-orange) !important;}.has-luminous-vivid-orange-to-vivid-red-gradient-background{background: var(--wp--preset--gradient--luminous-vivid-orange-to-vivid-red) !important;}.has-very-light-gray-to-cyan-bluish-gray-gradient-background{background: var(--wp--preset--gradient--very-light-gray-to-cyan-bluish-gray) !important;}.has-cool-to-warm-spectrum-gradient-background{background: var(--wp--preset--gradient--cool-to-warm-spectrum) !important;}.has-blush-light-purple-gradient-background{background: var(--wp--preset--gradient--blush-light-purple) !important;}.has-blush-bordeaux-gradient-background{background: var(--wp--preset--gradient--blush-bordeaux) !important;}.has-luminous-dusk-gradient-background{background: var(--wp--preset--gradient--luminous-dusk) !important;}.has-pale-ocean-gradient-background{background: var(--wp--preset--gradient--pale-ocean) !important;}.has-electric-grass-gradient-background{background: var(--wp--preset--gradient--electric-grass) !important;}.has-midnight-gradient-background{background: var(--wp--preset--gradient--midnight) !important;}.has-small-font-size{font-size: var(--wp--preset--font-size--small) !important;}.has-medium-font-size{font-size: var(--wp--preset--font-size--medium) !important;}.has-large-font-size{font-size: var(--wp--preset--font-size--large) !important;}.has-x-large-font-size{font-size: var(--wp--preset--font-size--x-large) !important;}
+</style> 
+  <link rel="canonical" href="https://aws.amazon.com/blogs/database/single-table-vs-multi-table-design-in-amazon-dynamodb/"> 
+  <meta property="og:locale" content="en_US"> 
+  <meta property="og:site_name" content="Amazon Web Services"> 
+  <meta property="og:title" content="Single-table vs. multi-table design in Amazon DynamoDB | Amazon Web Services"> 
+  <meta property="og:type" content="article"> 
+  <meta property="og:url" content="https://aws.amazon.com/blogs/database/single-table-vs-multi-table-design-in-amazon-dynamodb/"> 
+  <meta property="og:description" content="This is a guest post by Alex DeBrie, an AWS Hero. For people learning about Amazon DynamoDB, the idea of single-table design is one of the most mind-bending concepts out there. Rather than the relational notion of having a table per entity, DynamoDB tables often include multiple different entities in a single table. You can […]"> 
+  <meta property="og:image" content="https://d2908q01vomqb2.cloudfront.net/887309d048beef83ad3eabf2a79a64a389ab1c9f/2022/08/16/DBBLOG-2555-featured-images.jpg"> 
+  <meta property="og:image:width" content="400"> 
+  <meta property="og:image:height" content="200"> 
+  <meta property="og:updated_time" content="2022-08-16T09:53:15-07:00"> 
+  <meta property="article:publisher" content="https://www.facebook.com/amazonwebservices"> 
+  <meta property="article:section" content="Amazon DynamoDB"> 
+  <meta property="article:tag" content="Amazon DynamoDB"> 
+  <meta property="article:tag" content="Intermediate (200)"> 
+  <meta property="article:published_time" content="2022-08-16T09:53:15-07:00"> 
+  <meta property="article:modified_time" content="2022-08-16T09:53:15-07:00"> 
+  <meta name="twitter:card" content="summary_large_image"> 
+  <meta name="twitter:site" content="@awscloud"> 
+  <meta name="twitter:domain" content="https://aws.amazon.com/blogs/"> 
+  <meta name="twitter:title" content="Single-table vs. multi-table design in Amazon DynamoDB | Amazon Web Services"> 
+  <meta name="twitter:description" content="This is a guest post by Alex DeBrie, an AWS Hero. For people learning about Amazon DynamoDB, the idea of single-table design is one of the most mind-bending concepts out there. Rather than the relational notion of having a table per entity, DynamoDB tables often include multiple different entities in a single table. You can […]"> 
+  <meta name="twitter:image" content="https://d2908q01vomqb2.cloudfront.net/887309d048beef83ad3eabf2a79a64a389ab1c9f/2022/08/16/DBBLOG-2555-featured-images.jpg"> 
+  <link rel="icon" type="image/ico" href="https://a0.awsstatic.com/main/images/site/fav/favicon.ico"> 
+  <link rel="shortcut icon" type="image/ico" href="https://a0.awsstatic.com/main/images/site/fav/favicon.ico"> 
+  <link rel="apple-touch-icon" sizes="57x57" href="https://a0.awsstatic.com/main/images/site/touch-icon-iphone-114-smile.png"> 
+  <link rel="apple-touch-icon" sizes="72x72" href="https://a0.awsstatic.com/main/images/site/touch-icon-ipad-144-smile.png"> 
+  <link rel="apple-touch-icon" sizes="114x114" href="https://a0.awsstatic.com/main/images/site/touch-icon-iphone-114-smile.png"> 
+  <link rel="apple-touch-icon" sizes="144x144" href="https://a0.awsstatic.com/main/images/site/touch-icon-ipad-144-smile.png"> 
+  <link rel="home" type="application/rss+xml" title="RSS 2.0 Feed" href="https://aws.amazon.com/blogs/database/feed/"> 
+  <meta name="robots" content="index, follow"> 
+  <link rel="stylesheet" href="https://a0.awsstatic.com/libra-css/css/1.0.485/style-awsm.css"> 
+  <link rel="stylesheet" href="https://a0.awsstatic.com/aws-blog/1.0.67/css/blog.css"> 
+  <script type="application/json" id="aws-page-settings">
+    {"blogPageTitle":"Single-table vs. multi-table design in Amazon DynamoDB","currentLanguage":"en-US","libraCSSPath":"https:\/\/a0.awsstatic.com\/libra-css\/css\/1.0.485","requireBaseUrl":"https:\/\/a0.awsstatic.com","requirePackages":[{"name":"libra","location":"libra\/1.0.548"}],"requirePaths":{"aws-blog":"https:\/\/a0.awsstatic.com\/aws-blog\/1.0.67\/js","directories":"https:\/\/a0.awsstatic.com\/libra\/1.0.548\/directories","librastandardlib":"https:\/\/a0.awsstatic.com\/libra\/1.0.548\/librastandardlib","scripts":"https:\/\/a0.awsstatic.com\/libra\/1.0.548\/v1-polyfills\/scripts"},"supportedLanguages":["ar","de","en","es","fr","id","it","jp","ko","pt","ru","th","tr","vi","cn","tw"]}  </script> 
+  <script src="https://a0.awsstatic.com/aws-blog/1.0.67/js/blog-head.js"></script> 
+  <script src="https://a0.awsstatic.com/s_code/js/3.0/awshome_s_code.js"></script> 
+  <script type="application/json" id="target-mediator">
+    {"supportedLanguages":["ar","de","en","es","fr","id","it","jp","ko","pt","ru","th","tr","vi","cn","tw"],"pageLanguage":"en","customParams":{"category0":"Amazon DynamoDB","category1":"Intermediate (200)"}}  </script> 
+  <script src="https://a0.awsstatic.com/target/1.0.121/aws-target-mediator.js"></script> 
+  <noscript> 
+   <style>.js-mbox { visibility: visible; }</style> 
+  </noscript> 
+ </head> 
+ <body class="awsm aws-blogs-page aws-blogs-page-type-single"> 
+  <script id="awsc-panorama-bundle" src="https://prod.pa.cdn.uis.awsstatic.com/panorama-nav-init.js" data-config="{&quot;appEntity&quot;:&quot;aws-marketing&quot;,&quot;region&quot;:&quot;us-west-1&quot;,&quot;service&quot;:&quot;blogs-site&quot;}" async="true"></script> 
+  <a id="aws-page-skip-to-main" class="lb-sr-only lb-sr-only-focusable lb-bold lb-skip-el" href="#aws-page-content-main"> Skip to Main Content</a> 
+  <header id="aws-page-header" class="awsm m-page-header lb-with-mobile-subrow" role="banner"> 
+   <div id="m-nav" class="m-nav" role="navigation"> 
+    <div class="m-nav-header lb-clearfix" data-menu-url="https://s0.awsstatic.com/en_US/nav/v3/panel-content/desktop/index.html"> 
+     <div class="m-nav-logo"> 
+      <div class="lb-bg-logo aws-amazon_web_services_smile-header-desktop-en"> 
+       <a href="https://aws.amazon.com/?nc2=h_lg"><span>Click here to return to Amazon Web Services homepage</span></a> 
+      </div> 
+     </div> 
+     <nav class="m-nav-secondary-links" style="min-width: 620px" aria-label="Secondary navigation"> 
+      <a href="https://aws.amazon.com/contact-us/?nc2=h_header">Contact Us</a> 
+      <a class="lb-txt-none lb-tiny-iblock lb-txt-13 lb-txt lb-has-trigger-indicator" href="#" data-mbox-ignore="true" data-lb-popover-trigger="popover-support-selector" role="button" aria-expanded="false" aria-label="Explore support options" id="popover-popover-support-selector-trigger" aria-controls="popover-support-selector" aria-haspopup="true"> Support&nbsp; <i class="icon-caret-down lb-trigger-mount"></i></a> 
+      <a id="m-nav-language-selector" class="lb-tiny-iblock lb-txt lb-has-trigger-indicator" href="#" data-lb-popover-trigger="popover-language-selector" data-language="en" aria-label="Set site language" role="button" aria-controls="popover-language-selector" aria-expanded="false" aria-haspopup="true">English&nbsp;<i class="icon-caret-down lb-trigger-mount"></i></a> 
+      <a class="lb-tiny-iblock lb-txt lb-has-trigger-indicator" href="#" data-lb-popover-trigger="popover-my-account" aria-label="Access account options" role="button" aria-controls="popover-my-account" aria-expanded="false" aria-haspopup="true">My Account&nbsp;<i class="icon-caret-down lb-trigger-mount"></i></a> 
+      <div class="m-nav-cta-btn"> 
+       <div class="lb-mbox js-mbox" data-lb-comp="mbox" data-lb-comp-ignore="true" data-mbox="en_header_nav_cta"> 
+        <div class="lb-data-attr-wrapper data-attr-wrapper" data-da-type="so" data-da-so-type="viewport" data-da-so-language="en" data-da-so-category="monitoring" data-da-so-name="nav-buttons" data-da-so-version="sign-up-sign-in-all" data-da-so-url="nav"> 
+         <div class="data-attr-wrapper lb-tiny-iblock lb-none-pad lb-box" data-da-type="so" data-da-so-type="viewport" data-da-so-language="en" data-da-so-category="monitoring" data-da-so-name="nav-buttons" data-da-so-version="prospect-sign-in" data-da-so-url="all"> 
+          <a class="lb-txt-none lb-tiny-iblock lb-txt-13 lb-txt" style="padding-top:8px; padding-right:13px;" href="https://console.aws.amazon.com/console/home?nc2=h_ct&amp;src=header-signin"> Sign In</a> 
+         </div> 
+         <div class="data-attr-wrapper lb-tiny-iblock lb-none-v-margin lb-btn" data-da-type="so" data-da-so-type="viewport" data-da-so-language="en" data-da-so-category="monitoring" data-da-so-name="nav-buttons" data-da-so-version="prospect-signup" data-da-so-url="all"> 
+          <a class="lb-btn-p-primary" href="https://portal.aws.amazon.com/gp/aws/developer/registration/index.html?nc2=h_ct&amp;src=header_signup" data-trk-params="{&quot;trkOverrideWithQs&quot;:true}" role="button"> <span> Create an AWS Account</span> </a> 
+         </div> 
+        </div> 
+       </div> 
+      </div> 
+     </nav> 
+     <div class="m-nav-primary-group"> 
+      <nav class="m-nav-primary-links" aria-label="Primary navigation"> 
+       <i class="m-nav-angle-left-icon" aria-hidden="true"></i> 
+       <ul> 
+        <li aria-expanded="false"><span><a href="https://aws.amazon.com/products/?nc2=h_ql_prod" data-panel="m-nav-panel-products">Products</a></span></li> 
+        <li aria-expanded="false"><span><a href="https://aws.amazon.com/solutions/?nc2=h_ql_sol" data-panel="m-nav-panel-solutions">Solutions</a></span></li> 
+        <li aria-expanded="false"><span><a href="https://aws.amazon.com/pricing/?nc2=h_ql_pr" data-panel="m-nav-panel-pricing">Pricing</a></span></li> 
+        <li aria-expanded="false"><span><a href="https://aws.amazon.com/documentation-overview/?nc2=h_ql_doc_do" data-panel="m-nav-panel-documentation">Documentation</a></span></li> 
+        <li aria-expanded="false"><span><a href="https://aws.amazon.com/getting-started/?nc2=h_ql_le" data-panel="m-nav-panel-learn">Learn</a></span></li> 
+        <li aria-expanded="false"><span><a href="https://aws.amazon.com/partners/?nc2=h_ql_pn" data-panel="m-nav-panel-partner">Partner Network</a></span></li> 
+        <li aria-expanded="false"><span><a href="https://aws.amazon.com/marketplace/?nc2=h_ql_mp" data-panel="m-nav-panel-marketplace">AWS Marketplace</a></span></li> 
+        <li aria-expanded="false"><span><a href="https://aws.amazon.com/customer-enablement/?nc2=h_ql_ce" data-panel="m-nav-panel-customer">Customer Enablement</a></span></li> 
+        <li aria-expanded="false"><span><a href="https://aws.amazon.com/events/?nc2=h_ql_ev" data-panel="m-nav-panel-events">Events</a></span></li> 
+        <li aria-expanded="false"><span><a href="https://aws.amazon.com/contact-us/?nc2=h_ql_exm" data-panel="m-nav-panel-more">Explore More </a></span></li> 
+       </ul> 
+       <div class="m-nav-icon-group"> 
+        <i class="m-nav-angle-right-icon" aria-hidden="true"></i> 
+        <i class="m-nav-search-icon" tabindex="0" role="button" aria-expanded="false" aria-label="Search"></i> 
+       </div> 
+      </nav> 
+      <div id="m-nav-desktop-search" class="m-nav-search"> 
+       <form action="https://aws.amazon.com/search/" role="search"> 
+        <div class="m-typeahead" data-directory-id="typeahead-suggestions" data-lb-comp="typeahead"> 
+         <input class="m-nav-search-field" placeholder="Search" autocomplete="off" spellcheck="false" dir="auto" type="text" name="searchQuery"> 
+        </div> 
+       </form> 
+       <i class="m-nav-close-icon" role="button" aria-label="Close"></i> 
+      </div> 
+     </div> 
+    </div> 
+    <div class="lb-popover lb-popover-aui lb-popover-tiny" data-lb-comp="popover" data-id="popover-language-selector" id="popover-language-selector" aria-modal="false" aria-labelledby="popover-popover-language-selector-trigger" data-action="hover" data-position="top"> 
+     <a class="lb-popover-close" role="button" tabindex="0" aria-label="Close" title="Close"> <span class="lb-sr-only">Close</span> </a> 
+     <div class="lb-grid lb-row lb-row-max-large lb-snap"> 
+      <div class="lb-col lb-tiny-24 lb-mid-12"> 
+       <ul class="lb-txt-none lb-ul lb-list-style-none lb-tiny-ul-block"> 
+        <li lang="ar-SA" translate="no" data-language="ar"><a href="https://aws.amazon.com/ar/?nc1=h_ls">عربي</a></li> 
+        <li lang="id-ID" translate="no" data-language="id"><a href="https://aws.amazon.com/id/?nc1=h_ls">Bahasa Indonesia</a></li> 
+        <li lang="de-DE" translate="no" data-language="de"><a href="https://aws.amazon.com/de/?nc1=h_ls">Deutsch</a></li> 
+        <li lang="en-US" translate="no" data-language="en"><a href="https://aws.amazon.com/?nc1=h_ls">English</a></li> 
+        <li lang="es-ES" translate="no" data-language="es"><a href="https://aws.amazon.com/es/?nc1=h_ls">Español</a></li> 
+        <li lang="fr-FR" translate="no" data-language="fr"><a href="https://aws.amazon.com/fr/?nc1=h_ls">Français</a></li> 
+        <li lang="it-IT" translate="no" data-language="it"><a href="https://aws.amazon.com/it/?nc1=h_ls">Italiano</a></li> 
+        <li lang="pt-BR" translate="no" data-language="pt"><a href="https://aws.amazon.com/pt/?nc1=h_ls">Português</a></li> 
+       </ul> 
+      </div> 
+      <div class="lb-col lb-tiny-24 lb-mid-12"> 
+       <ul class="lb-txt-none lb-ul lb-list-style-none lb-tiny-ul-block"> 
+        <li lang="vi-VN" translate="no" data-language="vi"><a href="https://aws.amazon.com/vi/?nc1=f_ls">Tiếng Việt</a></li> 
+        <li lang="tr-TR" translate="no" data-language="tr"><a href="https://aws.amazon.com/tr/?nc1=h_ls">Türkçe</a></li> 
+        <li lang="ru-RU" translate="no" data-language="ru"><a href="https://aws.amazon.com/ru/?nc1=h_ls">Ρусский</a></li> 
+        <li lang="th-TH" translate="no" data-language="th"><a href="https://aws.amazon.com/th/?nc1=f_ls">ไทย</a></li> 
+        <li lang="ja-JP" translate="no" data-language="jp"><a href="https://aws.amazon.com/jp/?nc1=h_ls">日本語</a></li> 
+        <li lang="ko-KR" translate="no" data-language="ko"><a href="https://aws.amazon.com/ko/?nc1=h_ls">한국어</a></li> 
+        <li lang="zh-CN" translate="no" data-language="cn"><a href="https://aws.amazon.com/cn/?nc1=h_ls">中文 (简体)</a></li> 
+        <li lang="zh-TW" translate="no" data-language="tw"><a href="https://aws.amazon.com/tw/?nc1=h_ls">中文 (繁體)</a></li> 
+       </ul> 
+      </div> 
+     </div> 
+    </div> 
+    <div class="lb-popover lb-popover-aui lb-popover-tiny" data-lb-comp="popover" data-id="popover-my-account" id="popover-my-account" aria-modal="false" aria-labelledby="popover-popover-my-account-trigger" data-action="hover" data-position="top"> 
+     <a class="lb-popover-close" role="button" tabindex="0" aria-label="Close" title="Close"> <span class="lb-sr-only">Close</span> </a> 
+     <ul class="lb-txt-none lb-ul lb-list-style-none lb-tiny-ul-block"> 
+      <li class="m-no-auth" data-myaws-auth-only="true"><a href="https://aws.amazon.com/profile/?nc2=h_m_mc">My Profile</a></li> 
+      <li class="m-no-auth" data-myaws-auth-only="true"><a href="https://auth.aws.amazon.com/sign-out/?nc2=h_m_mc">Sign out of AWS Builder ID</a></li> 
+      <li><a href="https://console.aws.amazon.com/?nc2=h_m_mc">AWS Management Console</a></li> 
+      <li><a href="https://console.aws.amazon.com/billing/home#/account?nc2=h_m_ma">Account Settings</a></li> 
+      <li><a href="https://console.aws.amazon.com/billing/home?nc2=h_m_bc">Billing &amp; Cost Management</a></li> 
+      <li><a href="https://console.aws.amazon.com/iam/home?nc2=h_m_sc#security_credential">Security Credentials</a></li> 
+      <li><a href="https://phd.aws.amazon.com/?nc2=h_m_sc">AWS Personal Health Dashboard</a></li> 
+     </ul> 
+    </div> 
+    <div class="lb-popover lb-popover-aui lb-popover-tiny" data-lb-comp="popover" data-id="popover-support-selector" id="popover-support-selector" aria-modal="false" aria-labelledby="popover-popover-support-selector-trigger" data-action="hover" data-position="top"> 
+     <a class="lb-popover-close" role="button" tabindex="0" aria-label="Close" title="Close"> <span class="lb-sr-only">Close</span> </a> 
+     <ul class="lb-txt-none lb-ul lb-list-style-none lb-tiny-ul-block"> 
+      <li><a href="https://console.aws.amazon.com/support/home/?nc2=h_ql_cu">Support Center</a></li> 
+      <li><a href="https://iq.aws.amazon.com/?utm=mkt.nav">Expert Help</a></li> 
+      <li><a href="https://repost.aws/knowledge-center/?nc2=h_m_ma">Knowledge Center</a></li> 
+      <li><a href="https://aws.amazon.com/premiumsupport/?nc2=h_m_bc">AWS Support Overview</a></li> 
+      <li><a href="https://repost.aws/">AWS re:Post</a></li> 
+     </ul> 
+    </div> 
+    <script type="text/x-handlebars-template" data-hbs-template-path="nav-desktop/suggestions" data-hbs-context="{&quot;pricingText&quot;:&quot;Pricing&quot;,&quot;documentationText&quot;:&quot;Documentation&quot;,&quot;calculatorText&quot;:&quot;Calculator&quot;}"></script> 
+    <script type="text/x-handlebars-template" data-hbs-template-path="nav-desktop/products-head" data-hbs-context="{&quot;productsText&quot;:&quot;Products&quot;}"></script> 
+    <script type="text/x-handlebars-template" data-hbs-template-path="nav-desktop/keypages-head" data-hbs-context="{&quot;relatedPagesText&quot;:&quot;Related Pages&quot;}"></script> 
+    <script type="text/x-handlebars-template" data-hbs-template-path="nav-desktop/tutorials-head" data-hbs-context="{&quot;tutorialsText&quot;:&quot;Tutorials&quot;}"></script> 
+    <script type="text/x-handlebars-template" data-hbs-template-path="nav-desktop/blogs-head" data-hbs-context="{&quot;blogsText&quot;:&quot;Blogs&quot;}"></script> 
+    <script type="text/x-handlebars-template" data-hbs-template-path="nav-desktop/see-all" data-hbs-context="{&quot;resultsText&quot;:&quot;See more results for&quot;}"></script> 
+   </div> 
+   <div id="m-nav-mobile" class="m-nav-mobile"> 
+    <div id="m-nav-mobile-header" class="m-nav-mobile-header m-nav-mobile-with-sub-row" data-menu-url="https://s0.awsstatic.com/en_US/nav/v3/panel-content/mobile/index.html"> 
+     <div class="lb-bg-logo aws-amazon_web_services_smile-header-mobile-en"> 
+      <a href="https://aws.amazon.com/?nc2=h_lg"><span>Click here to return to Amazon Web Services homepage</span></a> 
+     </div> 
+     <div class="m-nav-mobile-button-group"> 
+      <i class="m-nav-mobile-button icon-search" tabindex="0" role="button" aria-expanded="false" aria-label="Search"></i> 
+      <i class="m-nav-mobile-button icon-reorder" tabindex="0" role="button" aria-expanded="false" aria-label="Menu"></i> 
+     </div> 
+     <div id="m-nav-mobile-sub-row" class="m-nav-mobile-sub-row"> 
+      <div class="data-attr-wrapper lb-btn" data-da-type="so" data-da-so-category="monitoring" data-da-so-language="en" data-da-so-name="global-mobile-sticky-cta-buttons" data-da-so-type="viewport" data-da-so-version="get-started-for-free-cta" data-da-so-url="all"> 
+       <a class="lb-btn-p-primary" href="https://portal.aws.amazon.com/gp/aws/developer/registration/index.html?nc2=h_mobile" role="button"> <span> Get Started for Free</span> </a> 
+      </div> 
+      <div class="data-attr-wrapper lb-btn" data-da-type="so" data-da-so-category="monitoring" data-da-so-language="en" data-da-so-name="global-mobile-sticky-cta-buttons" data-da-so-type="viewport" data-da-so-version="contact-us"> 
+       <a class="lb-btn-p" href="https://aws.amazon.com/contact-us/?nc2=h_mobile" role="button"> <span> Contact Us</span> </a> 
+      </div> 
+     </div> 
+    </div> 
+    <div id="m-nav-mobile-search" class="m-nav-mobile-search"> 
+     <form action="https://aws.amazon.com/search" role="search"> 
+      <div class="m-typeahead"> 
+       <input class="m-nav-search-field" placeholder="Search" autocomplete="off" spellcheck="false" dir="auto" type="text" name="searchQuery"> 
+      </div> 
+     </form> 
+    </div> 
+    <nav id="m-nav-trimdown" role="navigation"> 
+     <ul class="m-nav-mobile-menu-group"> 
+      <li> <a href="https://aws.amazon.com/products/?nc2=h_mo">Products</a> </li> 
+      <li> <a href="https://aws.amazon.com/solutions/?nc2=h_mo">Solutions</a> </li> 
+      <li> <a href="https://aws.amazon.com/pricing/?nc2=h_mo">Pricing</a> </li> 
+      <li> <a href="https://aws.amazon.com/what-is-aws/?nc2=h_mo">Introduction to AWS</a> </li> 
+      <li> <a href="https://aws.amazon.com/getting-started/?nc2=h_mo">Getting Started</a> </li> 
+      <li> <a href="https://aws.amazon.com/documentation-overview/?nc2=h_mo">Documentation</a> </li> 
+      <li> <a href="https://aws.amazon.com/training/?nc2=h_mo">Training and Certification</a> </li> 
+      <li> <a href="https://aws.amazon.com/developer/?nc2=h_mo">Developer Center</a> </li> 
+      <li> <a href="https://aws.amazon.com/solutions/case-studies/?nc2=h_mo">Customer Success</a> </li> 
+      <li> <a href="https://aws.amazon.com/partners/?nc2=h_mo">Partner Network</a> </li> 
+      <li> <a href="https://aws.amazon.com/marketplace/?nc2=h_mo">AWS Marketplace</a> </li> 
+      <li> <a href="https://console.aws.amazon.com/support/home?nc2=h_ql_cu">Support</a> </li> 
+      <li> <a href="https://repost.aws/">AWS re:Post</a> </li> 
+      <li> <a href="https://console.aws.amazon.com/console/home">Log into Console</a> </li> 
+      <li> <a href="https://aws.amazon.com/console/mobile/">Download the Mobile App</a> </li> 
+     </ul> 
+    </nav> 
+   </div> 
+  </header> 
+  <div class="awsm"> 
+   <div class="lb-blog-nav" data-lb-comp="aws-blog:blog-nav" data-lb-sticky-header="true"> 
+    <div class="lb-row lb-row-max-xlarge lb-snap"> 
+     <div class="lb-blog-nav-content"> 
+      <div class="lb-blog-nav-links"> 
+       <a class="lb-txt-none lb-txt" href="/blogs" data-trk-params="{&quot;trkOverrideWithQs&quot;:true}"> AWS Blog Home</a> 
+       <a class="lb-txt-none lb-txt lb-has-trigger-indicator" href="#" data-mbox-ignore="true" data-lb-popover-trigger="blog-category" role="button" aria-expanded="false" aria-label="Select blog category" id="popover-blog-category-trigger" aria-controls="blog-category" aria-haspopup="true" data-trk-params="{&quot;trkOverrideWithQs&quot;:true}"> Blogs&nbsp; <i class="icon-caret-down lb-trigger-mount"></i></a> 
+       <a class="lb-txt-none lb-txt lb-has-trigger-indicator" href="#" data-mbox-ignore="true" data-lb-popover-trigger="blog-editions" role="button" aria-expanded="false" aria-label="Select blog language" id="popover-blog-editions-trigger" aria-controls="blog-editions" aria-haspopup="true" data-trk-params="{&quot;trkOverrideWithQs&quot;:true}"> Editions&nbsp; <i class="icon-caret-down lb-trigger-mount"></i></a> 
+      </div> 
+     </div> 
+    </div> 
+   </div> 
+   <div class="lb-popover lb-popover-aui lb-popover-xlarge" data-lb-comp="popover" data-id="blog-category" id="blog-category" aria-modal="false" aria-labelledby="popover-blog-category-trigger" data-action="hover" data-position="top"> 
+    <a class="lb-popover-close" role="button" tabindex="0" aria-label="Close" title="Close"> <span class="lb-sr-only">Close</span> </a> 
+    <div class="lb-none-pad lb-none-v-margin lb-grid lb-row lb-row-max-large lb-snap"> 
+     <div class="lb-col lb-tiny-24 lb-mid-12"> 
+      <div class="lb-none-pad lb-none-v-margin lb-box"> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/architecture/"> Architecture</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/mt/" data-trk-params="{&quot;trkOverrideWithQs&quot;:true}"> AWS Cloud Operations &amp; Migrations</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/gametech/" data-trk-params="{&quot;trkOverrideWithQs&quot;:true}"> AWS for Games</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/aws-insights/"> AWS Insights</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/awsmarketplace/"> AWS Marketplace</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/aws/"> AWS News</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/apn/"> AWS Partner Network</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/smb/"> AWS Smart Business</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/big-data/"> Big Data</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/business-intelligence/"> Business Intelligence</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/business-productivity/"> Business Productivity</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/enterprise-strategy/" data-trk-params="{&quot;trkOverrideWithQs&quot;:true}"> Cloud Enterprise Strategy</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/aws-cloud-financial-management/"> Cloud Financial Management</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/compute/"> Compute</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/contact-center/"> Contact Center</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/containers/"> Containers</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/database/"> Database</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/desktop-and-application-streaming/"> Desktop &amp; Application Streaming</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/developer/" data-trk-params="{&quot;trkOverrideWithQs&quot;:true}"> Developer Tools</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/devops/"> DevOps</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/mobile/"> Front-End Web &amp; Mobile</a> 
+      </div> 
+     </div> 
+     <div class="lb-col lb-tiny-24 lb-mid-12"> 
+      <div class="lb-none-pad lb-none-v-margin lb-box"> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/hpc/"> HPC</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/industries/"> Industries</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/infrastructure-and-automation/"> Integration &amp; Automation</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/iot/"> Internet of Things</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/machine-learning/"> Machine Learning</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/media/"> Media</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/messaging-and-targeting/"> Messaging &amp; Targeting</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/modernizing-with-aws/"> Microsoft Workloads on AWS</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/dotnet/"> .NET on AWS</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/networking-and-content-delivery/"> Networking &amp; Content Delivery</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/opensource/"> Open Source</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/publicsector/"> Public Sector</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/quantum-computing/" data-trk-params="{&quot;trkOverrideWithQs&quot;:true}"> Quantum Computing</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/robotics/"> Robotics</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/awsforsap/"> SAP</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/security/" data-trk-params="{&quot;trkOverrideWithQs&quot;:true}"> Security</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/spatial/"> Spatial Computing</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/startups/"> Startups</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/storage/"> Storage</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/supply-chain/"> Supply Chain &amp; Logistics</a> 
+       <a class="lb-txt-none lb-txt" href="https://aws.amazon.com/blogs/training-and-certification/"> Training &amp; Certification</a> 
+      </div> 
+     </div> 
+    </div> 
+   </div> 
+   <div class="lb-popover lb-popover-aui lb-popover-tiny" data-lb-comp="popover" data-id="blog-editions" id="blog-editions" aria-modal="false" aria-labelledby="popover-blog-editions-trigger" data-action="hover" data-position="top"> 
+    <a class="lb-popover-close" role="button" tabindex="0" aria-label="Close" title="Close"> <span class="lb-sr-only">Close</span> </a> 
+    <ul class="lb-txt-none lb-none-v-margin lb-ul lb-list-style-none lb-li-micro-v-margin lb-tiny-ul-block"> 
+     <li translate="no" lang="zh-CN"><a href="https://aws.amazon.com/cn/blogs/china/">中国版</a></li> 
+     <li translate="no" lang="ja-JP"><a href="https://aws.amazon.com/jp/blogs/news/">日本版</a></li> 
+     <li translate="no" lang="ko-KR"><a href="https://aws.amazon.com/ko/blogs/korea/">한국 에디션</a></li> 
+     <li translate="no" lang="ko-KR"><a href="https://aws.amazon.com/ko/blogs/tech/">기술 블로그</a></li> 
+     <li translate="no" lang="id-ID"><a href="https://aws.amazon.com/id/blogs/indonesia/">Edisi Bahasa Indonesia</a></li> 
+     <li translate="no" lang="tr-TR"><a href="https://aws.amazon.com/th/blogs/thailand/">AWS Thai Blog</a></li> 
+     <li translate="no" lang="fr-FR"><a href="https://aws.amazon.com/fr/blogs/france/">Édition Française</a></li> 
+     <li translate="no" lang="de-DE"><a href="https://aws.amazon.com/de/blogs/germany/">Deutsche Edition</a></li> 
+     <li translate="no" lang="pt-BR"><a href="https://aws.amazon.com/pt/blogs/aws-brasil/">Edição em Português</a></li> 
+     <li translate="no" lang="es-ES"><a href="https://aws.amazon.com/es/blogs/aws-spanish/">Edición en Español</a></li> 
+     <li translate="no" lang="ru-RU"><a href="https://aws.amazon.com/ru/blogs/rus/">Версия на русском</a></li> 
+     <li translate="no" lang="tr-TR"><a href="https://aws.amazon.com/tr/blogs/turkey/">Türkçe Sürüm</a></li> 
+    </ul> 
+   </div> 
+  </div> 
+  <div id="aws-page-content" class="aws-blog-has-related-posts lb-page-content lb-page-with-sticky-subnav blog-page" data-page-alert-target="true"> 
+   <div class="aws-blog-content lb-row lb-row-max-large lb-snap lb-gutter-mid"> 
+    <main class="lb-col lb-tiny-24 lb-mid-16" role="main" id="aws-page-content-main" tabindex="-1"> 
+     <h2 class="lb-h5 blog-title"><a href="https://aws.amazon.com/blogs/database/">AWS Database Blog</a></h2> 
+     <article class="blog-post" vocab="https://schema.org/" typeof="TechArticle"> 
+      <meta property="inLanguage" content="en-US"> 
+      <meta property="image" content="https://d2908q01vomqb2.cloudfront.net/887309d048beef83ad3eabf2a79a64a389ab1c9f/2022/08/16/DBBLOG-2555-featured-images.jpg"> 
+      <h1 class="lb-h2 blog-post-title" property="name headline">Single-table vs. multi-table design in Amazon DynamoDB</h1> 
+      <footer class="blog-post-meta" data-lb-comp="aws-blog:share-dialog">
+        by 
+       <span property="author" typeof="Person"><span property="name">Alex DeBrie</span></span> | on 
+       <time property="datePublished" datetime="2022-08-16T09:53:15-07:00">16 AUG 2022</time> | in 
+       <span class="blog-post-categories"><a href="https://aws.amazon.com/blogs/database/category/database/amazon-dynamodb/" title="View all posts in Amazon DynamoDB"><span property="articleSection">Amazon DynamoDB</span></a>, <a href="https://aws.amazon.com/blogs/database/category/learning-levels/intermediate-200/" title="View all posts in Intermediate (200)"><span property="articleSection">Intermediate (200)</span></a></span> | 
+       <a href="https://aws.amazon.com/blogs/database/single-table-vs-multi-table-design-in-amazon-dynamodb/" property="url">Permalink</a> | 
+       <a href="https://aws.amazon.com/blogs/database/single-table-vs-multi-table-design-in-amazon-dynamodb/#Comments"><i class="icon-comment"></i> Comments</a> | 
+       <a href="#" role="button" data-share-dialog-toggle><span class="span icon-share"></span>&nbsp;Share</a> 
+       <div class="blog-share-dialog" data-share-dialog style="display: none;"> 
+        <ul> 
+         <li> <a class="lb-txt" href="https://www.facebook.com/sharer/sharer.php?u=https://aws.amazon.com/blogs/database/single-table-vs-multi-table-design-in-amazon-dynamodb/" target="_blank" rel="noopener noreferrer" aria-label="Share on Facebook"><span class="icon-facebook-square"></span></a> </li> 
+         <li> <a class="lb-txt" href="https://twitter.com/intent/tweet/?text=Single-table%20vs.%20multi-table%20design%20in%20Amazon%20DynamoDB&amp;via=awscloud&amp;url=https://aws.amazon.com/blogs/database/single-table-vs-multi-table-design-in-amazon-dynamodb/" target="_blank" rel="noopener noreferrer" aria-label="Share on Twitter"><span class="icon-twitter-square"></span></a> </li> 
+         <li> <a class="lb-txt" href="https://www.linkedin.com/shareArticle?mini=true&amp;title=Single-table%20vs.%20multi-table%20design%20in%20Amazon%20DynamoDB&amp;source=Amazon%20Web%20Services&amp;url=https://aws.amazon.com/blogs/database/single-table-vs-multi-table-design-in-amazon-dynamodb/" target="_blank" rel="noopener noreferrer" aria-label="Share on LinkedIn"><span class="icon-linkedin-square"></span></a> </li> 
+         <li> <a class="lb-txt" href="mailto:?subject=Single-table%20vs.%20multi-table%20design%20in%20Amazon%20DynamoDB&amp;body=Single-table%20vs.%20multi-table%20design%20in%20Amazon%20DynamoDB%0A%0Ahttps://aws.amazon.com/blogs/database/single-table-vs-multi-table-design-in-amazon-dynamodb/" target="_blank" rel="noopener noreferrer" aria-label="Share on Email"><span class="icon-envelope-square"></span></a> </li> 
+         <li class="blog-share-dialog-url"><input type="text" value="https://aws.amazon.com/blogs/database/single-table-vs-multi-table-design-in-amazon-dynamodb/" title="Link to Single-table vs. multi-table design in Amazon DynamoDB" readonly data-share-dialog-url></li> 
+        </ul> 
+       </div> 
+      </footer> 
+      <section class="blog-post-content lb-rtxt" property="articleBody"> 
+       <p><em>This is a guest post by Alex DeBrie, an AWS Hero.</em></p> 
+       <p>For people learning about <a href="https://docs.aws.amazon.com/dynamodb" target="_blank" rel="noopener noreferrer">Amazon DynamoDB</a>, the idea of <a href="https://www.alexdebrie.com/posts/dynamodb-single-table/" target="_blank" rel="noopener noreferrer">single-table design</a> is one of the most mind-bending concepts out there. Rather than the relational notion of having a table per entity, DynamoDB tables often include multiple different entities in a single table.</p> 
+       <p>You can <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-general-nosql-design.html" target="_blank" rel="noopener noreferrer">read the DynamoDB documentation</a>, <a href="https://github.com/alexdebrie/awesome-dynamodb#videos" target="_blank" rel="noopener noreferrer">watch re:Invent talks or other videos</a>, or <a href="https://www.dynamodbbook.com/" target="_blank" rel="noopener noreferrer">check out my book</a> to learn some of the design patterns with single-table design in DynamoDB. I want to look at the topic at a higher level with a specific focus on arguments both for and against single-table design.</p> 
+       <p>In this post, we’ll talk about single-table design in DynamoDB. We’ll start off with some relevant background on DynamoDB that will inform the data modeling discussion. Then, we’ll discuss when single-table design can be helpful in your application. Finally, we’ll conclude with some instances where using multiple tables in DynamoDB might be better for you.</p> 
+       <h1>Relevant background on DynamoDB</h1> 
+       <p>Before we get too far into the merits of single- vs. multi-table design, let’s start with some background on DynamoDB. We don’t have room to exhaustively cover everything here, but I want to hit a few points that are relevant to the single- vs. multi-table debate.</p> 
+       <p>As we cover these, there’s one overarching theme that ties them together: <em>DynamoDB wants to expose reality to you, so that you can make the right decision for your application’s needs</em>. Most databases provide an abstraction over the low-level bits. These abstractions make it easier for you to query your data in flexible ways, but they also hide important details from you. Because these details are hidden, these databases can scale in unpredictable ways or make it difficult to understand what your database will cost as usage grows.</p> 
+       <p>With that in mind, let’s review some distinctive features of DynamoDB.</p> 
+       <h2>Reliance on two core mechanisms for consistent scaling</h2> 
+       <p>Above all else, DynamoDB wants to provide consistent performance as your application scales. No matter the size of your database or the number of concurrent queries, DynamoDB aims to provide the same single-digit millisecond response time for all operations.</p> 
+       <p>To do this, DynamoDB relies on two core mechanisms: partitioning and the B-tree. With these solid foundations, DynamoDB is able to scale tables to petabytes of data and millions of concurrent queries.</p> 
+       <p>Let’s start with partitioning. In a traditional relational database, you store all items on a single node. As your data or usage grows, you might increase your instance size to keep up. However, vertical scaling has its limits, and often you find that the performance of relational databases degrade as data size increases.</p> 
+       <p>To avoid this, DynamoDB uses partitioning to provide horizontal scalability. Each item in your DynamoDB table will include a partition key. Under the hood, DynamoDB is sharding your database into segments called <em>partitions</em> (as shown in Figure 1 that follows), each of which holds a maximum of 10 GB of data.</p> 
+       <div id="attachment_23599" style="width: 739px" class="wp-caption alignnone"> 
+        <a href="https://d2908q01vomqb2.cloudfront.net/887309d048beef83ad3eabf2a79a64a389ab1c9f/2022/08/15/DBBLOG-2555-image001.png"><img aria-describedby="caption-attachment-23599" class="wp-image-23599 size-full" src="https://d2908q01vomqb2.cloudfront.net/887309d048beef83ad3eabf2a79a64a389ab1c9f/2022/08/15/DBBLOG-2555-image001.png" alt="Figure 1: DynamoDB database sharded into three partitions" width="729" height="639"></a> 
+        <p id="caption-attachment-23599" class="wp-caption-text">Figure 1: DynamoDB database sharded into three partitions</p> 
+       </div> 
+       <p>When a request comes to DynamoDB, the request router layer looks up the location of the partition for the given item and routes the request to the proper partition for processing, as shown in Figure 2 that follows.</p> 
+       <div id="attachment_23600" style="width: 1049px" class="wp-caption alignnone"> 
+        <a href="https://d2908q01vomqb2.cloudfront.net/887309d048beef83ad3eabf2a79a64a389ab1c9f/2022/08/15/DBBLOG-2555-image003.png"><img aria-describedby="caption-attachment-23600" loading="lazy" class="size-full wp-image-23600" src="https://d2908q01vomqb2.cloudfront.net/887309d048beef83ad3eabf2a79a64a389ab1c9f/2022/08/15/DBBLOG-2555-image003.png" alt="Figure 2: Request routed to the appropriate partition for processing" width="1039" height="639"></a> 
+        <p id="caption-attachment-23600" class="wp-caption-text">Figure 2: Request routed to the appropriate partition for processing</p> 
+       </div> 
+       <p>As your table grows, DynamoDB can seamlessly add new partitions and redistribute your data to scale with your workload. The metadata subsystem retains a mapping of partition key ranges to storage nodes and can quickly route your request to the relevant partition.</p> 
+       <p>While partitioning enables horizontal scaling, we often need to fetch a range of related items in a single request. That’s where DynamoDB’s second core mechanism comes in. A <a href="https://en.wikipedia.org/wiki/B-tree" target="_blank" rel="noopener noreferrer">B-tree</a> is an efficient way to maintain sorted data. This is useful in many data applications, such as sorting usernames in alphabetical order or sorting e-commerce orders by the order timestamp.</p> 
+       <p>DynamoDB stores the items on each partition in a B-tree that are ordered according to their partition key and (if used by the table) sort key. This B-tree provides logarithmic time complexity for finding a key. This use of a B-tree on subsets of your data allows for highly efficient range queries of items with the same partition key.</p> 
+       <h2>Direct access to the data structures with a focused API</h2> 
+       <p>Partitioning and B-trees are interesting, but they’re hardly unique to DynamoDB. Every NoSQL database uses some form of partitioning to horizontally scale, and every database under the sun uses B-trees (or close relatives) in indexing operations.</p> 
+       <p>The big difference between DynamoDB and other databases is how natively DynamoDB exposes these data structures to you. There’s no query planner to parse your query into a multi-step process to read, join, and aggregate data from different places on disk. And there are no flexible indexing strategies outside the core partitioning and B-tree setup.</p> 
+       <p>DynamoDB has a focused API that gives you direct access to your items and their foundational data structures. This API is broken into two main categories. There are basic CRUD operations on individual items—PutItem, GetItem, UpdateItem, and DeleteItem. These operations require the full primary key, and you can consider them to be equivalent to a simple lookup in a hash table.</p> 
+       <p>The second category of the DynamoDB API includes the Query operation, a <em>fetch many</em> operation that allows you to retrieve multiple items in a single request. You can use this to fetch all Orders for a particular Customer or to fetch the most recent Readings for an IoT Sensor.</p> 
+       <p>But even the Query operation is locked down, as you must provide an exact match on a partition key so that it can be routed to a single partition to service the request. It combines the fast targeting based on the partition key with the quick search and easy sequential reads of a B-tree to provide an efficient range query as you scale.</p> 
+       <p>Note what isn’t provided by the DynamoDB API. You can’t use the JOIN operation to combine multiple tables, like you can in a relational database. Nor can you use aggregations like count, sum, min, or max to condense a large number of records. These operations are opaque and highly dependent on the number of records affected by the query, which cannot be known in advance. In order to provide consistent performance at any scale, DynamoDB removes higher-level constructs like joins and aggregates that add significant variability.</p> 
+       <h2>Transparent billing based on bytes read and bytes written</h2> 
+       <p>In the previous section, we saw that DynamoDB makes performance transparent to you by building on key data structures and exposing them directly to you. In doing so, it removes the magic and unpredictability of databases that use opaque query planners.</p> 
+       <p>DynamoDB does the same thing with costs. It costs to write data to disk. It costs to read data back from disk. And both of these costs increase with the size of the data you’re reading or writing. DynamoDB makes these underlying costs legible to you by billing you directly on the bytes you’re writing to and reading from your table.</p> 
+       <p>DynamoDB’s billing is based on write capacity units (WCUs) and read capacity units (RCUs). At a quick glance, one WCU allows you to write 1 KB of data, while one RCU allows you to read 4 KB of data. You can provision read and write capacity units in advance, or you can use on-demand billing to pay for each read or write request as it comes in.</p> 
+       <p>I love this transparency. One thing I always tell people working with DynamoDB is “Do the math.” If you have a rough estimate of how much traffic you’ll have, you can do the math to figure out what it will cost you. Or, if you are deciding between two approaches to model the data, you can do the math to see which one is cheaper.</p> 
+       <p>As we’ll see in the following section, this transparent billing model is one reason to use single-table design principles in your data modeling.</p> 
+       <h1>Why and when to use single-table design</h1> 
+       <p>So now that we know some basics about DynamoDB, let’s see why you might want to use single-table design in your application.</p> 
+       <p>Before we start, I want to note that the recommendation for single-table design applies to a single service. If you have multiple services in your application, each of them should have their own DynamoDB table. You should think of a DynamoDB table similar to an RDBMS instance—everywhere you would have a separate RDBMS instance, you should have a separate DynamoDB table.</p> 
+       <p>Additionally, if there’s a rule of thumb for when to combine entities in a single table, it’s this: <em>Items that are accessed together should be stored together</em>. If you store data in two different tables in an RDBMS and frequently join these two tables, you should consider storing them in a single, denormalized DynamoDB table. If not, you’re generally fine to separate them if you choose.</p> 
+       <p>There are three functional reasons to use single-table design with DynamoDB, plus one non-functional, bonus reason. Let’s look through them now.</p> 
+       <h2>Use single-table design to provide materialized joins in DynamoDB</h2> 
+       <p>In the background section, we saw that DynamoDB has a focused API and that it removes common SQL operations like JOINs.</p> 
+       <p>But joins are useful! If I have a one-to-many or many-to-many relationship, I might have an access pattern where I’m fetching one item but also need some information about a related parent item.</p> 
+       <p>When I first started with DynamoDB, I used a multi-table system that was similar to relational databases. Because DynamoDB doesn’t provide joins out of the box, I just implemented joins in my application code. For example, imagine I wanted to fetch both a Customer and the Customer’s Orders for a particular access pattern. To do so, I would fetch the Customer record first, get its primary key, and then fetch the related Orders with a foreign key relationship.</p> 
+       <div id="attachment_23601" style="width: 1090px" class="wp-caption alignnone"> 
+        <a href="https://d2908q01vomqb2.cloudfront.net/887309d048beef83ad3eabf2a79a64a389ab1c9f/2022/08/15/DBBLOG-2555-image005.png"><img aria-describedby="caption-attachment-23601" loading="lazy" class="size-full wp-image-23601" src="https://d2908q01vomqb2.cloudfront.net/887309d048beef83ad3eabf2a79a64a389ab1c9f/2022/08/15/DBBLOG-2555-image005.png" alt="Figure 3: Fetching information from a multi-table design" width="1080" height="940"></a> 
+        <p id="caption-attachment-23601" class="wp-caption-text">Figure 3: Fetching information from a multi-table design</p> 
+       </div> 
+       <p>But this is an inefficient way to handle this use case. The I/O from my application to DynamoDB is the slowest part of my application’s processing, and I’m doing it twice by issuing two, separate, sequential queries, as shown in the preceding Figure 3.</p> 
+       <p>If I know that this will be a common access pattern in my application, I can lean on DynamoDB’s core data structures and API to optimize that. Rather than making separate, sequential requests, I can <em>pre-join</em> related items and materialize the join in advance. If I give the Customer item the same partition key as the related Order items, they’ll be located on the same partition and be ordered according to the sort key. Then, I can use the Query operation to fetch all the items in a single, efficient request, as shown in Figure 4 that follows.</p> 
+       <div id="attachment_23602" style="width: 1090px" class="wp-caption alignnone"> 
+        <a href="https://d2908q01vomqb2.cloudfront.net/887309d048beef83ad3eabf2a79a64a389ab1c9f/2022/08/15/DBBLOG-2555-image007.png"><img aria-describedby="caption-attachment-23602" loading="lazy" class="size-full wp-image-23602" src="https://d2908q01vomqb2.cloudfront.net/887309d048beef83ad3eabf2a79a64a389ab1c9f/2022/08/15/DBBLOG-2555-image007.png" alt="Figure 4: Fetching information from a single-table database" width="1080" height="740"></a> 
+        <p id="caption-attachment-23602" class="wp-caption-text">Figure 4: Fetching information from a single-table database</p> 
+       </div> 
+       <p>This is the canonical example for using single-table design. We can handle access patterns that involve heterogeneous items while still getting the consistent performance we expect from DynamoDB.</p> 
+       <h2>Use single-table design to reduce costs across large items</h2> 
+       <p>A second reason to use single-table design principles is to reduce your DynamoDB costs.</p> 
+       <p>In many NoSQL systems, you’re encouraged to create larger, denormalized <em>documents</em> that contain related, nested data. This is in recognition that you often fetch related data together, and it can be more efficient to keep the data together as a single record rather than separate records.</p> 
+       <p>While this strategy can be good advice, be careful not to take it too far. Remember that DynamoDB makes costs legible to you and that read and write costs scale with the size of the item.</p> 
+       <p>It’s common to have a large item with two distinct sets of attributes: some large, slow-moving attributes combined with small, fast-moving attributes. For example, think of an item representing a video on YouTube. There is a lot of data about the video itself, such as the various resolutions available and their locations, the video description, subtitles, and info cards. This is a lot of information, and it rarely changes.</p> 
+       <p>However, a YouTube video also has a counter displaying the number of views for a video. This is a tiny attribute—a few bits of data—but it might increment thousands of times per day. If you stored this counter on the same item as the video metadata, you might be paying multiple WCUs every time you want to increment the view count. This pattern is shown in Figure 5 that follows.</p> 
+       <div id="attachment_23603" style="width: 1142px" class="wp-caption alignnone"> 
+        <a href="https://d2908q01vomqb2.cloudfront.net/887309d048beef83ad3eabf2a79a64a389ab1c9f/2022/08/15/DBBLOG-2555-image009.png"><img aria-describedby="caption-attachment-23603" loading="lazy" class="size-full wp-image-23603" src="https://d2908q01vomqb2.cloudfront.net/887309d048beef83ad3eabf2a79a64a389ab1c9f/2022/08/15/DBBLOG-2555-image009.png" alt="Figure 5: Incrementing the ViewCount attribute as part of the item metadata" width="1132" height="488"></a> 
+        <p id="caption-attachment-23603" class="wp-caption-text">Figure 5: Incrementing the ViewCount attribute as part of the item metadata</p> 
+       </div> 
+       <p>Instead, you could break this item into two items: a Video item and a VideoStats item. When recording a view, you would only be incrementing the small VideoStats item. When displaying the video, you could fetch both items using the Query operation, as shown in Figure 6 that follows.</p> 
+       <div id="attachment_23604" style="width: 1140px" class="wp-caption alignnone"> 
+        <a href="https://d2908q01vomqb2.cloudfront.net/887309d048beef83ad3eabf2a79a64a389ab1c9f/2022/08/15/DBBLOG-2555-image011.png"><img aria-describedby="caption-attachment-23604" loading="lazy" class="size-full wp-image-23604" src="https://d2908q01vomqb2.cloudfront.net/887309d048beef83ad3eabf2a79a64a389ab1c9f/2022/08/15/DBBLOG-2555-image011.png" alt="Figure 6: Incrementing the ViewCount attribute separately from the metadata" width="1130" height="764"></a> 
+        <p id="caption-attachment-23604" class="wp-caption-text">Figure 6: Incrementing the ViewCount attribute separately from the metadata</p> 
+       </div> 
+       <p>With this pattern, we can use DynamoDB’s transparency on costs and schemaless nature to optimize for our application needs.</p> 
+       <h2>Use single-table design to reduce your operational burden</h2> 
+       <p>A third reason to use a single DynamoDB table is to reduce your operational burden. The math here is simple—the fewer things you have, the fewer things you have to monitor! The logic here is a bit more complicated, particularly in light of improvements that AWS has made to DynamoDB.</p> 
+       <p>Let’s start with the strong version of the argument. While a DynamoDB table has some things in common with a table in a relational database, there are a number of differences, too. Most importantly, each DynamoDB table is a separate piece of infrastructure. That infrastructure requires configuration, monitoring, alarms, and backups. If you have 15 different entities in your application and thus 15 different DynamoDB tables, it can become a burden.</p> 
+       <p>By combining your data into a single table, the logic goes, your operational burden is reduced. You only need to monitor one table rather than 15. Additionally, there are AWS limits to the number of tables in an AWS Region plus the number of concurrent control plane operations. If you have a large account or are doing table segmenting by customer, you can hit these limits.</p> 
+       <p>Using a single table for multiple entities can even enhance your general table performance. DynamoDB provides <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ProvisionedThroughput.html#ProvisionedThroughput.Throttling" target="_blank" rel="noopener noreferrer">burst capacity</a> on a partition level that allows you to exceed your provisioned throughput for short periods on a best-efforts basis. If you have a larger table, your items will be distributed across more partitions and thus decrease the potential throttling blast radius.</p> 
+       <p>Finally, it’s often true that a small number of your access patterns dominate the read and write capacity of your application. By combining your entities into a single table, your access patterns that are used less frequently can blend into the excess capacity of your core pattern.</p> 
+       <p>That said, I think this argument is a small factor in my consideration. The maintenance on a DynamoDB table is pretty light, and it can mostly be automated via <a href="https://aws.amazon.com/cloudformation/" target="_blank" rel="noopener noreferrer">AWS CloudFormation</a> or other infrastructure-as-code tools. You can configure auto-scaling, set up alarms, or enable backups via point-in-time recovery in an automated way.</p> 
+       <p>Further, DynamoDB has made a number of improvements that reduce this argument even further. In 2018, <a href="https://aws.amazon.com/blogs/database/how-amazon-dynamodb-adaptive-capacity-accommodates-uneven-data-access-patterns-or-why-what-you-know-about-dynamodb-might-be-outdated/" target="_blank" rel="noopener noreferrer">DynamoDB announced adaptive capacity</a>, which spreads your provisioning capacity across your table to the partitions that need it most. Then, in 2019, DynamoDB announced on-demand billing mode. If managing your capacity is a burden, you can switch to on-demand mode and only pay for the resources you need.</p> 
+       <h2>Bonus: it forces you to think about DynamoDB correctly</h2> 
+       <p>As someone who likes to help people learn DynamoDB and use it well, my last reason is (selfishly) about the learning process rather than any particular application or operational benefits. This argument goes as follows: the emphasis on single-table design in DynamoDB helps to nail home the message that modeling with DynamoDB is different than the modeling you’ve done in a relational database.</p> 
+       <p>So many new DynamoDB users do what I did—lift and shift their relational data model into a bunch of DynamoDB tables. They then write a bad version of a query processor in their application by doing in-memory joins and aggregations. This approach leads to sluggish apps that don’t get the scalability and predictability that can be delivered by DynamoDB.</p> 
+       <p>Telling people that most services can use a single table teaches that a DynamoDB table isn’t directly comparable to a relational database table. Users dig a little deeper and realize they need to focus on access patterns first, rather than an abstracted, normalized version of their data. They learn the key strategies for modeling NoSQL data stores to optimize performance.</p> 
+       <p>On this same point, I think learning DynamoDB makes you a better developer. Because DynamoDB is exposing the foundations to you, you learn that some of the abstractions you were using before aren’t free. Even when going back to a relational database, you look harder at features like joins and aggregations, understanding that the performance profile isn’t the same as selecting a single record by an indexed field.</p> 
+       <h1>Reasons to use multiple tables in DynamoDB</h1> 
+       <p>In the previous section, we saw the core arguments in support of single-table design in DynamoDB. However, the choice between one table and multiple tables is nuanced, and there are situations where multiple tables might be a good choice for you. Let’s explore some of these below.</p> 
+       <h2>You have multiple needs for DynamoDB Streams</h2> 
+       <p><a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html" target="_blank" rel="noopener noreferrer">Amazon DynamoDB Streams</a> is one of my favorite features of DynamoDB. I can get a fully managed change data capture stream that includes a record of every write operation against my DynamoDB table. Then, I can process that change stream with serverless compute to update aggregations, share events across systems, or feed analytics systems.</p> 
+       <p>One of the downsides of DynamoDB Streams is the limitation on the number of concurrent consumers. DynamoDB limits you to <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html#limits-dynamodb-streams" target="_blank" rel="noopener noreferrer">no more than two concurrent consumers on a DynamoDB stream</a>. If you have additional consumers, your stream processing requests will get throttled.</p> 
+       <p>In a single-table design with ten or more entities, it’s not uncommon to exceed this limit. Perhaps a new Order item needs to trigger an <a href="https://aws.amazon.com/step-functions/" target="_blank" rel="noopener noreferrer">AWS Step Functions</a> workflow to process the Order, while a new Customer registration needs to broadcast the registration to other services via <a href="https://aws.amazon.com/eventbridge/" target="_blank" rel="noopener noreferrer">Amazon EventBridge</a>. At some point, you need to make some hard tradeoffs, such as adding more logic to a single stream consumer or wiring up a system of FIFO SNS topics (using <a href="https://aws.amazon.com/sns" target="_blank" rel="noopener noreferrer">Amazon Simple Notification Service (Amazon SNS</a>) and <a href="https://aws.amazon.com/sqs/" target="_blank" rel="noopener noreferrer">Amazon Simple Queue Service (Amazon SQS)</a> queues to provide event fanout while retaining ordering semantics.</p> 
+       <p>If this is the case, it might be easier to split your single table into multiple focused tables. Each table can hold a smaller number of entities and have a more focused DynamoDB stream pipeline.</p> 
+       <h2>You want an easier export for analytics</h2> 
+       <p>DynamoDB is an online transaction processing (OLTP) system that is designed for a high number of concurrent updates on individual records. Think of common user-facing interactions—placing an order or commenting on a discussion thread. It excels at these workloads, and it allows for atomic operations, low latency, and ACID transactions when working with a small number of records in a request.</p> 
+       <p>Conversely, DynamoDB isn’t great at online analytical processing (OLAP) operations. These are internal analytics operations—think of a business analyst that wants to know the week-over-week sales by category and region or a marketing team that wants to find the most popular social media posts over the past year. These operations don’t need high throughput or low latency, but they do need to efficiently scan large amounts of data and perform computation.</p> 
+       <p>For these OLAP needs, most DynamoDB users export their data to an external analytics system like <a href="https://aws.amazon.com/athena/?whats-new-cards.sort-by=item.additionalFields.postDateTime&amp;whats-new-cards.sort-order=desc" target="_blank" rel="noopener noreferrer">Amazon Athena</a> or <a href="https://aws.amazon.com/redshift/" target="_blank" rel="noopener noreferrer">Amazon Redshift</a> that are purpose-built for large-scale aggregations. However, the mechanism for getting your data from DynamoDB to your analytics system can vary depending on the specifics of your data.</p> 
+       <p>Some users use the DynamoDB Streams feature discussed above to stream records into their analytical database. Often, this involves using <a href="https://aws.amazon.com/kinesis/data-firehose/" target="_blank" rel="noopener noreferrer">Amazon Kinesis Data Firehose</a> to buffer the data in <a href="https://aws.amazon.com/s3/" target="_blank" rel="noopener noreferrer">Amazon Simple Storage Service (Amazon S3)</a> before loading into Amazon Redshift, or simply using Data Firehose to send to S3 to be queried by Athena. This pattern works better for larger, immutable datasets as a full export of the table can be infeasible and the immutable nature of the data works well with OLAP-type systems.</p> 
+       <p>But some datasets are smaller and more mutable, and they have different needs. Think of the User or Customer entities in an application. These entities will be important in your data warehouse for joining with other, larger, event-like tables to give color to the events. Because these entities are mutable, we want our data warehouse to be regularly updated with the current version. Data warehouses don’t do well with random updates, so it’s usually better to export a full, updated table to load into your system. This usually uses either the <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/RedshiftforDynamoDB.html" target="_blank" rel="noopener noreferrer">Redshift COPY command</a> or the <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DataExport.html" target="_blank" rel="noopener noreferrer">DynamoDB export to S3 operation</a>.</p> 
+       <p>If you have both types of data in a single DynamoDB table, this can make it more difficult for your analytical needs. Doing a full table export will be slower as you’ll be exporting all of the larger, immutable dataset along with your smaller, mutable dataset. By splitting the different data into different tables, you can customize the analytics pipeline to the data’s specific shape and needs.</p> 
+       <h2>You don’t need the benefits, and it’s easier to reason about</h2> 
+       <p>The last reason to use multiple tables is mostly just a negation of the case <em>for</em> single-table design.</p> 
+       <p>If none of the benefits of single-table design above matter to you—you’re not setting up materialized joins to fetch heterogenous items in a single request, or breaking up items into separate pieces, or intimidated by the operational burden—then it’s fine to skip single-table design if multi-table design is easier for you to reason about.</p> 
+       <p>Let’s look a little deeper at the first benefit I mentioned above about modeling for joins in DynamoDB. It’s absolutely true that you want to avoid a normalized model that relies on in-application joins and multiple, sequential requests to DynamoDB. But that doesn’t necessarily mean we <em>must</em> use single-table design with materialized joins. We could get most of the same benefits by structuring our tables to fetch both sets of data in parallel, rather than sequentially.</p> 
+       <p>Think back to our example above where we needed to make sequential requests to DynamoDB—one to fetch the Customer record by email address and another to fetch the Orders by an assigned CustomerID. When switching to a single-table design model, we gave both entities a partition key of CustomerEmailAddress so we could fetch them with a single Query operation.</p> 
+       <p>This modeling switch doesn’t require two different tables. If our Orders table uses CustomerEmailAddress as the partition key, we can fetch the Orders records at the same time we’re fetching the Customer record.</p> 
+       <p>This is slightly slower than making a single request, as you’ll be waiting for the slowest of the two requests to return. And you’ll pay a bit more, as you’re not getting the aggregation benefits of the Query operation in calculating your RCUs. But it’s likely you’ll need to implement something like this anyway, even in single-table design, for pagination instances where a client is fetching beyond the first page. If these tradeoffs are acceptable to you and your application, then you can opt for a multi-table design.</p> 
+       <p>Note that this isn’t an excuse to avoid learning how DynamoDB works! You shouldn’t model DynamoDB like a relational database, and you should learn DynamoDB data modeling principles. In almost all models I’ve done over the years, we could combine two separate tables into a single table if needed because they focus on access patterns first and design the primary keys to handle those access patterns.</p> 
+       <h2>Conclusion</h2> 
+       <p>In this post, we learned about single-table design with DynamoDB. First, we started with some relevant background on DynamoDB that is important to the single table discussion. Then, we saw some reasons to use single-table design in DynamoDB. Finally, we looked at some reasons why you might want to use multiple tables in your application.</p> 
+       <p>My final takeaway is this: make sure you understand the principles of modeling with DynamoDB first. DynamoDB isn’t a relational database and you shouldn’t use it like one. The learning curve feels steep, but there are really only three or four key concepts you need to learn, and everything else flows from that. Once you understand these basics, you’ll be able to make more informed decisions about how many tables to use in your application.</p> 
+       <p>If you’re wanting to understand DynamoDB data modeling, there are lots of great resources out there. I wrote <a href="https://www.dynamodbbook.com/" target="_blank" rel="noopener noreferrer">The DynamoDB Book</a>, a comprehensive guide to data modeling with DynamoDB that teaches you the underlying concepts as well as examples with practical application. I also highly recommend the <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html" target="_blank" rel="noopener noreferrer">DynamoDB developer documentation</a>, as the DynamoDB team has done a great job explaining how to think about DynamoDB correctly. Don’t be afraid to dive in and try it out. The DynamoDB community is a friendly, growing community, and you’ll find plenty of support along the way.</p> 
+       <p>My thanks to Joseph Idziorek, Jeff Duffy, and Amrith Kumar for their input and comments as I wrote this blog post.</p> 
+       <hr> 
+       <h3>About the authors</h3> 
+       <p style="clear: both"><strong><a href="https://d2908q01vomqb2.cloudfront.net/887309d048beef83ad3eabf2a79a64a389ab1c9f/2022/08/15/alex-debrie.jpg"><img loading="lazy" class="size-full wp-image-23608 alignleft" src="https://d2908q01vomqb2.cloudfront.net/887309d048beef83ad3eabf2a79a64a389ab1c9f/2022/08/15/alex-debrie.jpg" alt="" width="100" height="100"></a>Alex DeBrie</strong> is an AWS Hero and the author of The DynamoDB Book, a comprehensive guide to data modeling with DynamoDB. He is an independent consultant who works with companies of all sizes to assist with DynamoDB data modeling and serverless AWS architecture implementations. In his free time, he loves sports and spending time with his wife and four children. Follow him on <a href="https://twitter.com/alexbdebrie?lang=en" target="_blank" rel="noopener noreferrer">Twitter</a>.</p> 
+       <!-- '"` --> 
+      </section> 
+      <footer> 
+      </footer> 
+      <aside class="blog-comments"> 
+       <h2 id="Comments">Comments</h2> 
+       <div class="blog-commenting" data-lb-comp="aws-blog:commenting" data-comment-url="https://commenting.awsblogs.com/embed-1.0.html?disqus_shortname=aws-databaseblog&amp;disqus_identifier=23597&amp;disqus_title=Single-table+vs.+multi-table+design+in+Amazon+DynamoDB&amp;disqus_url=https://aws.amazon.com/blogs/database/single-table-vs-multi-table-design-in-amazon-dynamodb/" data-sandbox-attr="allow-forms allow-scripts allow-popups allow-same-origin" data-origin="https://commenting.awsblogs.com"> 
+        <p><a href="https://commenting.awsblogs.com/embed-1.0.html?disqus_shortname=aws-databaseblog&amp;disqus_identifier=23597&amp;disqus_title=Single-table+vs.+multi-table+design+in+Amazon+DynamoDB&amp;disqus_url=https://aws.amazon.com/blogs/database/single-table-vs-multi-table-design-in-amazon-dynamodb/" property="discussionUrl">View Comments</a></p> 
+       </div> 
+      </aside> 
+      <div class="js-mbox" data-mbox="en_blog_post_comments"></div> 
+     </article> 
+    </main> 
+    <div class="blog-sidebar lb-col lb-tiny-24 lb-mid-8"> 
+     <div class="awsm"> 
+      <div class="lb-box" style="padding-left:30px;"> 
+       <h3 id="Resources" class="lb-txt-none lb-h3 lb-title" style="margin-top:30px;"> Resources</h3> 
+       <div class="data-attr-wrapper lb-none-pad lb-none-v-margin lb-box" data-da-type="ha" data-da-channel="ha" data-da-language="en" data-da-placement="blog-sb-resources" data-da-campaign="acq_awsblogsb" data-da-content="database-resources" data-da-trk="blog_initial"> 
+        <ul class="lb-txt-none lb-ul lb-list-style-none lb-li-none-v-margin lb-tiny-ul-block"> 
+         <li><a href="https://aws.amazon.com/getting-started?sc_ichannel=ha&amp;sc_icampaign=acq_awsblogsb&amp;sc_icontent=database-resources">Getting Started</a></li> 
+         <li><a href="https://aws.amazon.com/new?sc_ichannel=ha&amp;sc_icampaign=acq_awsblogsb&amp;sc_icontent=database-resources">What's New</a></li> 
+        </ul> 
+        <div class="lb-grid lb-row lb-row-max-large lb-snap"> 
+         <div class="lb-col lb-tiny-24 lb-mid-8"> 
+          <hr class="lb-divider"> 
+         </div> 
+         <div class="lb-col lb-tiny-24 lb-mid-8"> 
+         </div> 
+         <div class="lb-col lb-tiny-24 lb-mid-8"> 
+         </div> 
+        </div> 
+        <h3 id="Blog_Topics" class="lb-txt-none lb-h3 lb-title" style="margin-top:30px;"> Blog Topics</h3> 
+        <div class="data-attr-wrapper lb-none-pad lb-none-v-margin lb-box" data-da-type="ha" data-da-channel="ha" data-da-language="en" data-da-placement="blog-sb-social" data-da-campaign="acq_awsblogsb" data-da-content="database-social" data-da-trk="blog_initial"> 
+         <ul class="lb-txt-none lb-ul lb-list-style-none lb-li-none-v-margin lb-tiny-ul-block"> 
+          <li><a href="https://aws.amazon.com/blogs/database/category/database/amazon-aurora/">Amazon Aurora</a></li> 
+          <li><a href="https://aws.amazon.com/blogs/database/category/database/amazon-document-db/">Amazon DocumentDB</a></li> 
+          <li><a href="https://aws.amazon.com/blogs/database/category/database/amazon-dynamodb/">Amazon DynamoDB</a></li> 
+          <li><a href="https://aws.amazon.com/blogs/database/category/database/amazon-elasticache/">Amazon ElastiCache</a></li> 
+          <li><a href="https://aws.amazon.com/blogs/database/category/database/amazon-managed-apache-cassandra-service/">Amazon Keyspaces (for Apache Cassandra)</a></li> 
+          <li><a href="https://aws.amazon.com/blogs/database/category/blockchain/amazon-managed-blockchain/">Amazon Managed Blockchain</a></li> 
+          <li><a href="https://aws.amazon.com/blogs/database/category/database/amazon-memorydb-for-redis/">Amazon MemoryDB for Redis</a></li> 
+          <li><a href="https://aws.amazon.com/blogs/database/category/database/amazon-neptune/">Amazon Neptune</a></li> 
+          <li><a href="https://aws.amazon.com/blogs/database/category/database/amazon-quantum-ledger-database/">Amazon Quantum Ledger Database (Amazon QLDB)</a></li> 
+          <li><a href="https://aws.amazon.com/blogs/database/category/database/amazon-rds/">Amazon RDS</a></li> 
+          <li><a href="https://aws.amazon.com/blogs/database/category/database/amazon-timestream/">Amazon Timestream</a></li> 
+          <li><a href="https://aws.amazon.com/blogs/database/category/database/aws-database-migration-service/">AWS Database Migration Service</a></li> 
+          <li><a href="https://aws.amazon.com/blogs/database/category/database/aws-schema-conversion-tool/">AWS Schema Conversion Tool</a></li> 
+         </ul> 
+         <div class="lb-grid lb-row lb-row-max-large lb-snap"> 
+          <div class="lb-col lb-tiny-24 lb-mid-8"> 
+           <hr class="lb-divider"> 
+          </div> 
+          <div class="lb-col lb-tiny-24 lb-mid-8"> 
+          </div> 
+          <div class="lb-col lb-tiny-24 lb-mid-8"> 
+          </div> 
+         </div> 
+        </div> 
+       </div> 
+       <h3 id="Follow" class="lb-txt-none lb-h3 lb-title"> Follow</h3> 
+       <div class="data-attr-wrapper lb-none-pad lb-none-v-margin lb-box" data-da-type="ha" data-da-channel="ha" data-da-language="en" data-da-placement="blog-sb-social" data-da-campaign="acq_awsblogsb" data-da-content="database-social" data-da-trk="blog_initial"> 
+        <ul class="lb-txt-none lb-ul lb-list-style-none lb-li-none-v-margin lb-tiny-ul-block"> 
+         <li><a href="https://twitter.com/awscloud"><i class="icon-twitter-square"></i> &nbsp;Twitter</a></li> 
+         <li><a href="https://www.facebook.com/amazonwebservices"><i class="icon-facebook-square"></i> &nbsp;Facebook</a></li> 
+         <li><a href="https://www.linkedin.com/company/amazon-web-services/"><i class="icon-linkedin-square"></i> &nbsp;LinkedIn</a></li> 
+         <li><a href="https://www.twitch.tv/aws"><i class="icon-twitch"></i> &nbsp;Twitch</a></li> 
+         <li><a href="https://pages.awscloud.com/communication-preferences?sc_ichannel=ha&amp;sc_icampaign=acq_awsblogsb&amp;sc_icontent=database-social"><i class="icon-envelope-square"></i> &nbsp;Email Updates</a></li> 
+        </ul> 
+       </div> 
+      </div> 
+     </div> 
+     <div class="js-mbox" data-mbox="en_blog_post_sidebar"></div> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="awsm"> 
+   <footer id="aws-page-footer" class="m-page-footer" role="contentinfo"> 
+    <div class="data-attr-wrapper lb-none-v-margin lb-xb-grid-wrap" style="background-color:#242F3E;" data-da-type="so" data-da-so-type="viewport" data-da-so-language="en" data-da-so-category="monitoring" data-da-so-name="footer" data-da-so-version="a"> 
+     <div class="lb-xb-grid lb-row-max-large lb-snap lb-tiny-xb-1 lb-small-xb-3 lb-large-xb-5"> 
+      <div class="lb-xbcol"> 
+       <div class="data-attr-wrapper lb-small-hide lb-btn" data-da-type="so" data-da-so-type="viewport" data-da-so-language="en" data-da-so-category="monitoring" data-da-so-name="footer_buttons" data-da-so-url="all" data-da-so-version="footer_signin-mobile-default"> 
+        <a class="lb-btn-p-primary" href="https://console.aws.amazon.com/console/home?nc1=f_ct&amp;src=footer-signin-mobile" role="button"> <span> Sign In to the Console</span> </a> 
+       </div> 
+       <h3 class="lb-txt-none lb-txt-white lb-tiny-v-margin lb-h3 lb-title"> Learn About AWS</h3> 
+       <ul class="lb-txt-white lb-ul lb-list-style-none lb-li-micro-v-margin lb-tiny-ul-block" style="margin-bottom:0px;"> 
+        <li><a href="https://aws.amazon.com/what-is-aws/?nc1=f_cc" target="_blank" rel="noopener noreferrer">What Is AWS?</a></li> 
+        <li><a href="https://aws.amazon.com/what-is-cloud-computing/?nc1=f_cc" target="_blank" rel="noopener noreferrer">What Is Cloud Computing?</a></li> 
+        <li><a href="https://aws.amazon.com/diversity-inclusion/?nc1=f_cc" target="_blank" rel="noopener noreferrer">AWS Inclusion, Diversity &amp; Equity</a></li> 
+        <li><a href="https://aws.amazon.com/devops/what-is-devops/?nc1=f_cc" target="_blank" rel="noopener noreferrer">What Is DevOps?</a></li> 
+        <li><a href="https://aws.amazon.com/containers/?nc1=f_cc" target="_blank" rel="noopener noreferrer">What Is a Container?</a></li> 
+        <li><a href="https://aws.amazon.com/big-data/datalakes-and-analytics/what-is-a-data-lake/?nc1=f_cc" target="_blank" rel="noopener noreferrer">What Is a Data Lake?</a></li> 
+        <li><a href="https://aws.amazon.com/security/?nc1=f_cc" target="_blank" rel="noopener noreferrer">AWS Cloud Security</a></li> 
+        <li><a href="https://aws.amazon.com/new/?nc1=f_cc" target="_blank" rel="noopener noreferrer">What's New</a></li> 
+        <li><a href="https://aws.amazon.com/blogs/?nc1=f_cc" target="_blank" rel="noopener noreferrer">Blogs</a></li> 
+        <li><a href="https://press.aboutamazon.com/press-releases/aws" target="_blank" rel="noopener noreferrer" title="Press Releases">Press Releases</a></li> 
+       </ul> 
+      </div> 
+      <div class="lb-xbcol"> 
+       <h3 class="lb-txt-none lb-txt-white lb-tiny-v-margin lb-h3 lb-title"> Resources for AWS</h3> 
+       <ul class="lb-txt-white lb-ul lb-list-style-none lb-li-micro-v-margin lb-tiny-ul-block" style="margin-bottom:0px;"> 
+        <li><a href="https://aws.amazon.com/getting-started/?nc1=f_cc" target="_blank" rel="noopener noreferrer">Getting Started</a></li> 
+        <li><a href="https://aws.amazon.com/training/?nc1=f_cc" target="_blank" rel="noopener noreferrer">Training and Certification</a></li> 
+        <li><a href="https://aws.amazon.com/solutions/?nc1=f_cc" target="_blank" rel="noopener noreferrer">AWS Solutions Library</a></li> 
+        <li><a href="https://aws.amazon.com/architecture/?nc1=f_cc" target="_blank" rel="noopener noreferrer">Architecture Center</a></li> 
+        <li><a href="https://aws.amazon.com/faqs/?nc1=f_dr" target="_blank" rel="noopener noreferrer">Product and Technical FAQs</a></li> 
+        <li><a href="https://aws.amazon.com/resources/analyst-reports/?nc1=f_cc" target="_blank" rel="noopener noreferrer">Analyst Reports</a></li> 
+        <li><a href="https://aws.amazon.com/partners/work-with-partners/?nc1=f_dr" target="_blank" rel="noopener noreferrer">AWS Partners</a></li> 
+       </ul> 
+      </div> 
+      <div class="lb-xbcol"> 
+       <h3 class="lb-txt-none lb-txt-white lb-tiny-v-margin lb-h3 lb-title"> Developers on AWS</h3> 
+       <ul class="lb-txt-white lb-ul lb-list-style-none lb-li-micro-v-margin lb-tiny-ul-block" style="margin-bottom:0px;"> 
+        <li><a href="https://aws.amazon.com/developer/?nc1=f_dr" target="_blank" rel="noopener noreferrer">Developer Center</a></li> 
+        <li><a href="https://aws.amazon.com/developer/tools/?nc1=f_dr" target="_blank" rel="noopener noreferrer">SDKs &amp; Tools</a></li> 
+        <li><a href="https://aws.amazon.com/developer/language/net/?nc1=f_dr" target="_blank" rel="noopener noreferrer">.NET on AWS</a></li> 
+        <li><a href="https://aws.amazon.com/developer/language/python/?nc1=f_dr" target="_blank" rel="noopener noreferrer">Python on AWS</a></li> 
+        <li><a href="https://aws.amazon.com/developer/language/java/?nc1=f_dr" target="_blank" rel="noopener noreferrer">Java on AWS</a></li> 
+        <li><a href="https://aws.amazon.com/developer/language/php/?nc1=f_cc" target="_blank" rel="noopener noreferrer">PHP on AWS</a></li> 
+        <li><a href="https://aws.amazon.com/developer/language/javascript/?nc1=f_dr" target="_blank" rel="noopener noreferrer">JavaScript on AWS</a></li> 
+       </ul> 
+      </div> 
+      <div class="lb-xbcol"> 
+       <h3 class="lb-txt-none lb-txt-white lb-tiny-v-margin lb-h3 lb-title"> Help</h3> 
+       <ul class="lb-txt-white lb-ul lb-list-style-none lb-li-micro-v-margin lb-tiny-ul-block" style="margin-bottom:0px;"> 
+        <li><a href="https://aws.amazon.com/contact-us/?nc1=f_m" target="_blank" rel="noopener noreferrer">Contact Us</a></li> 
+        <li><a href="https://iq.aws.amazon.com/?utm=mkt.foot/?nc1=f_m" target="_blank" rel="noopener noreferrer">Get Expert Help</a></li> 
+        <li><a href="https://console.aws.amazon.com/support/home/?nc1=f_dr" target="_blank" rel="noopener noreferrer">File a Support Ticket</a></li> 
+        <li><a href="https://repost.aws/?nc1=f_dr" target="_blank" rel="noopener noreferrer">AWS re:Post</a></li> 
+        <li><a href="https://repost.aws/knowledge-center/?nc1=f_dr" target="_blank" rel="noopener noreferrer">Knowledge Center</a></li> 
+        <li><a href="https://aws.amazon.com/premiumsupport/?nc1=f_dr" target="_blank" rel="noopener noreferrer">AWS Support Overview</a></li> 
+        <li><a href="https://aws.amazon.com/legal/?nc1=f_cc" target="_blank" rel="noopener noreferrer">Legal</a></li> 
+        <li><a href="https://aws.amazon.com/careers/">AWS Careers</a></li> 
+       </ul> 
+       <div class="lb-mbox js-mbox" data-lb-comp="mbox" data-lb-comp-ignore="true" data-mbox="en_footer-v3_addl-help"> 
+       </div> 
+      </div> 
+      <div class="lb-xbcol"> 
+       <div class="lb-mbox js-mbox" data-lb-comp="mbox" data-lb-comp-ignore="true" data-mbox="en_footer-v3_cta"> 
+        <div class="data-attr-wrapper lb-tiny-hide lb-small-show lb-btn" data-da-type="so" data-da-so-type="viewport" data-da-so-language="en" data-da-so-category="monitoring" data-da-so-name="footer_buttons" data-da-so-url="all" data-da-so-version="footer_signup-default"> 
+         <a class="lb-btn-p-primary" href="https://portal.aws.amazon.com/gp/aws/developer/registration/index.html?nc1=f_ct&amp;src=default" role="button"> <span> Create an AWS Account</span> </a> 
+        </div> 
+       </div> 
+       <div class="lb-xb-grid-wrap" style="padding-left:0px; margin-top:20px; margin-bottom:0px;"> 
+        <div class="lb-xb-grid lb-row-max-large lb-xb-equal-height lb-snap lb-gutter-collapse lb-vgutter-collapse lb-tiny-xb-4"> 
+         <div class="lb-xbcol"> 
+          <a class="lb-txt-none lb-txt-white lb-none-pad lb-txt" style="padding-left:0px; padding-right:5px;" href="https://twitter.com/awscloud" target="_blank" rel="noopener noreferrer" title="Twitter"> <i class="icon-twitter"></i></a> 
+         </div> 
+         <div class="lb-xbcol"> 
+          <a class="lb-txt-none lb-txt-white lb-none-pad lb-none-v-margin lb-txt" style="padding-right:5px;" href="https://www.facebook.com/amazonwebservices" target="_blank" rel="noopener noreferrer" title="Facebook"> <i class="icon-facebook"></i></a> 
+         </div> 
+         <div class="lb-xbcol"> 
+          <a class="lb-txt-none lb-txt-white lb-none-pad lb-txt" style="padding-right:5px;" href="https://www.linkedin.com/company/amazon-web-services/" target="_blank" rel="noopener noreferrer" title="Linkedin"> <i class="icon-linkedin"></i></a> 
+         </div> 
+         <div class="lb-xbcol"> 
+          <a class="lb-txt-none lb-txt-white lb-none-pad lb-txt" style="padding-right:5px;" href="https://www.instagram.com/amazonwebservices/" target="_blank" rel="noopener noreferrer" title="Instagram"> <i class="icon-instagram"></i></a> 
+         </div> 
+        </div> 
+       </div> 
+       <div class="lb-xb-grid-wrap" style="padding-left:0px; margin-top:10px;"> 
+        <div class="lb-xb-grid lb-row-max-large lb-xb-equal-height lb-snap lb-gutter-collapse lb-vgutter-collapse lb-tiny-xb-4"> 
+         <div class="lb-xbcol"> 
+          <a class="lb-txt-none lb-txt-white lb-none-pad lb-txt" style="padding-right:5px;" href="https://www.twitch.tv/aws" target="_blank" rel="noopener noreferrer" title="Twitch"> <i class="icon-twitch"></i></a> 
+         </div> 
+         <div class="lb-xbcol"> 
+          <a class="lb-txt-none lb-txt-white lb-none-pad lb-txt" style="padding-right:5px;" href="https://www.youtube.com/user/AmazonWebServices/Cloud/" target="_blank" rel="noopener noreferrer" title="YouTube"> <i class="icon-youtube"></i></a> 
+         </div> 
+         <div class="lb-xbcol"> 
+          <a class="lb-txt-none lb-txt-white lb-none-pad lb-txt" style="padding-right:5px;" href="https://aws.amazon.com/podcasts/" target="_blank" rel="noopener noreferrer" title="Podcast"> <i class="icon-podcast"></i></a> 
+         </div> 
+         <div class="lb-xbcol"> 
+          <a class="lb-txt-none lb-txt-white lb-none-pad lb-txt" style="padding-right:5px;" href="https://pages.awscloud.com/communication-preferences?trk=homepage" target="_blank" rel="noopener noreferrer" title="Email"> <i class="icon-envelope-o"></i></a> 
+         </div> 
+        </div> 
+       </div> 
+       <div class="lb-txt-normal lb-txt-white lb-txt-14 lb-rtxt" style="color:#eaeded; margin-top:0px;"> 
+        <div>
+          Amazon is an Equal Opportunity Employer: 
+         <i> Minority / Women / Disability / Veteran / Gender Identity / Sexual Orientation / Age.</i> 
+        </div> 
+       </div> 
+      </div> 
+     </div> 
+    </div> 
+    <div class="lb-none-pad lb-none-v-margin lb-xb-grid-wrap" style="background-color:#242F3E;"> 
+     <div class="lb-xb-grid lb-row-max-large lb-snap lb-tiny-xb-1"> 
+      <div class="lb-xbcol"> 
+       <ul class="lb-txt-white lb-tiny-iblock lb-none-v-margin lb-ul lb-list-style-none lb-li-micro-v-margin lb-tiny-ul-iblock"> 
+        <li class="lb-txt-bold">Language</li> 
+        <li data-language="ar" lang="ar-SA" translate="no"><a href="https://aws.amazon.com/ar/?nc1=h_ls">عربي</a></li> 
+        <li data-language="id" lang="id-ID" translate="no"><a href="https://aws.amazon.com/id/?nc1=h_ls">Bahasa Indonesia</a></li> 
+        <li data-language="de" lang="de-DE" translate="no"><a href="https://aws.amazon.com/de/?nc1=h_ls">Deutsch</a></li> 
+        <li data-language="en" lang="en-US" translate="no"><a href="https://aws.amazon.com/?nc1=h_ls">English</a></li> 
+        <li data-language="es" lang="es-ES" translate="no"><a href="https://aws.amazon.com/es/?nc1=h_ls">Español</a></li> 
+        <li data-language="fr" lang="fr-FR" translate="no"><a href="https://aws.amazon.com/fr/?nc1=h_ls">Français</a></li> 
+        <li data-language="it" lang="it-IT" translate="no"><a href="https://aws.amazon.com/it/?nc1=h_ls">Italiano</a></li> 
+        <li data-language="pt" lang="pt-BR" translate="no"><a href="https://aws.amazon.com/pt/?nc1=h_ls">Português</a></li> 
+        <li data-language="vi" lang="vi-VN" translate="no"><a href="https://aws.amazon.com/vi/?nc1=f_ls">Tiếng Việt</a></li> 
+        <li data-language="tr" lang="tr-TR" translate="no"><a href="https://aws.amazon.com/tr/?nc1=h_ls">Türkçe</a></li> 
+        <li data-language="ru" lang="ru-RU" translate="no"><a href="https://aws.amazon.com/ru/?nc1=h_ls">Ρусский</a></li> 
+        <li data-language="th" lang="th-TH" translate="no"><a href="https://aws.amazon.com/th/?nc1=f_ls">ไทย</a></li> 
+        <li data-language="jp" lang="ja-JP" translate="no"><a href="https://aws.amazon.com/jp/?nc1=h_ls">日本語</a></li> 
+        <li data-language="ko" lang="ko-KR" translate="no"><a href="https://aws.amazon.com/ko/?nc1=h_ls">한국어</a></li> 
+        <li data-language="cn" lang="zh-CN" translate="no"><a href="https://aws.amazon.com/cn/?nc1=h_ls">中文 (简体)</a></li> 
+        <li data-language="tw" lang="zh-TW" translate="no"><a href="https://aws.amazon.com/tw/?nc1=h_ls">中文 (繁體)</a></li> 
+       </ul> 
+      </div> 
+     </div> 
+    </div> 
+    <div class="lb-none-pad lb-none-v-margin lb-xb-grid-wrap" style="background-color:#EAEDED; padding-top:5px;"> 
+     <div class="lb-xb-grid lb-row-max-large lb-snap lb-tiny-xb-1"> 
+      <div class="lb-xbcol"> 
+       <ul class="lb-txt-squid lb-none-v-margin lb-ul lb-list-style-none lb-li-none-v-margin lb-tiny-ul-iblock"> 
+        <li><a href="https://aws.amazon.com/privacy/?nc1=f_pr">Privacy</a></li> 
+        <li>|</li> 
+        <li><a href="https://aws.amazon.com/terms/?nc1=f_pr">Site Terms</a></li> 
+        <li>|</li> 
+        <li data-cookie-consent-modal="1"><a href="#"> Cookie Preferences </a></li> 
+        <li>|</li> 
+        <li>© 2023, Amazon Web Services, Inc. or its affiliates. All rights reserved.</li> 
+       </ul> 
+      </div> 
+     </div> 
+    </div> 
+   </footer> 
+  </div> 
+  <script data-disqus-cookies-disabled-dialog type="text/html">
+  <div class="lb-alert lb-alert-info">
+    <h4 class="lb-title">Feature not available</h4>
+
+    <p>Visit <a href="#" data-shortbread-modal="true">cookie preferences</a> and allow all cookies to enable this feature.</p>
+  </div>
+</script> 
+  <div id="aws-page-end"></div> 
+  <div id="lb-page-end"></div> 
+  <script src="https://a0.awsstatic.com/da/js/1.0.50/aws-da.js" async></script> 
+  <script src="https://a0.awsstatic.com/aws-blog/1.0.67/js/vendor/prism.js" data-default-language="markup"></script>  
+ </body>
+</html>
